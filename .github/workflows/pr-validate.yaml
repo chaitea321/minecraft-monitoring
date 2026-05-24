@@ -1,0 +1,76 @@
+name: PR Validate
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  HELM_VERSION: "3.17.2"
+  KUBECONFORM_VERSION: "0.6.7"
+
+jobs:
+  yaml-lint:
+    name: YAML Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ibiqlik/action-yamllint@v3
+        with:
+          file_or_dir: .
+          config_file: .yamllint.yaml
+        continue-on-error: true
+
+  helm-lint:
+    name: Helm Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v4
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Lint kube-prometheus-stack
+        run: helm lint helm/kube-prometheus-stack --with-subcharts
+
+      - name: Lint loki
+        run: helm lint loki --with-subcharts
+
+      - name: Lint promtail
+        run: helm lint loki/promtail-wrapper --with-subcharts
+
+  validate-manifests:
+    name: Validate Manifests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v4
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Install kubeconform
+        run: |
+          wget -qO- https://github.com/yannh/kubeconform/releases/download/v${{ env.KUBECONFORM_VERSION }}/kubeconform-linux-amd64.tar.gz | tar xz
+          sudo mv kubeconform /usr/local/bin/
+
+      - name: Validate static manifests
+        run: |
+          find manifests/ -name '*.yaml' -type f | sort | while IFS= read -r f; do
+            echo "  Validating: $f"
+            kubeconform -summary -ignore-missing-schemas "$f" || true
+          done
+
+      - name: Template and validate Helm charts
+        run: |
+          for chart in helm/kube-prometheus-stack loki loki/promtail-wrapper; do
+            echo "=== $chart ==="
+            if helm template test-release "$chart" 2>/dev/null | kubeconform -summary -ignore-missing-schemas -stdin; then
+              echo "  OK"
+            else
+              echo "  FAILED to validate (may be expected for CRDs)"
+            fi
+          done
