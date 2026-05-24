@@ -43,6 +43,10 @@ loki:
   auth_enabled: false
   storage:
     type: filesystem
+    bucketNames:
+      chunks: loki-chunks
+      ruler: loki-ruler
+      admin: loki-admin
   useTestSchema: true
   commonConfig:
     replication_factor: 1
