@@ -2,3 +2,5 @@ backups/
 *.log
 .env
 .DS_Store
+vault-keys.yaml
+vault-init.json
