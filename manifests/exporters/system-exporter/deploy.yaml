@@ -1,0 +1,168 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: system-exporter
+  namespace: monitoring
+  labels:
+    app: system-exporter
+    release: kube-prometheus-stack
+data:
+  exporter.py: |
+    #!/usr/bin/env python3
+    import os, time, random, http.server, threading
+    from prometheus_client import start_http_server, Gauge, Counter, Histogram
+
+    exporter_uptime = Gauge("exporter_uptime_seconds", "Process uptime")
+    exporter_info = Gauge("exporter_info", "Exporter info", ["version", "python_version"])
+    demo_random = Gauge("demo_random_value", "Random value")
+    demo_total = Counter("demo_processed_total", "Items processed", ["type"])
+    demo_dur = Histogram("demo_processing_duration_seconds", "Processing time", buckets=[0.001, 0.005, 0.01, 0.05, 0.1, 0.5])
+    cpu = Gauge("system_cpu_percent", "Simulated CPU")
+    mem = Gauge("system_memory_percent", "Simulated memory")
+
+    START = time.time()
+    exporter_info.labels(version="1.0.0", python_version=__import__("sys").version).set(1)
+
+    def collect():
+        random.seed(int(time.time() / 5))
+        duty = (time.time() % 60) / 60
+        demo_random.set(random.uniform(0, 100))
+        cpu.set(15 + 10 * duty)
+        mem.set(40 + 5 * duty)
+        if random.random() < 0.3:
+            demo_total.labels(type="success").inc()
+        if random.random() < 0.05:
+            demo_total.labels(type="failure").inc()
+        with demo_dur.time():
+            time.sleep(random.uniform(0.001, 0.03))
+
+    if __name__ == "__main__":
+        mp = int(os.environ.get("METRICS_PORT", "8000"))
+        hp = int(os.environ.get("HEALTH_PORT", "8001"))
+        ci = int(os.environ.get("COLLECT_INTERVAL", "15"))
+        start_http_server(mp)
+        class H(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                if self.path == "/health":
+                    self.send_response(200)
+                    self.end_headers()
+                    self.wfile.write(b'{"status":"ok"}')
+                else:
+                    self.send_response(404)
+                    self.end_headers()
+        srv = http.server.HTTPServer(("", hp), H)
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        print(f"Exporter metrics=:{mp} health=:{hp} interval={ci}s")
+        while True:
+            exporter_uptime.set(time.time() - START)
+            collect()
+            time.sleep(ci)
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: system-exporter
+  namespace: monitoring
+  labels:
+    app: system-exporter
+    release: kube-prometheus-stack
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: system-exporter
+  template:
+    metadata:
+      labels:
+        app: system-exporter
+        release: kube-prometheus-stack
+    spec:
+      containers:
+        - name: exporter
+          image: python:3.12-alpine
+          command: ["sh", "-c", "pip install -q prometheus-client && python3 /app/exporter.py"]
+          ports:
+            - containerPort: 8000
+              name: metrics
+            - containerPort: 8001
+              name: health
+          env:
+            - name: METRICS_PORT
+              value: "8000"
+            - name: HEALTH_PORT
+              value: "8001"
+            - name: COLLECT_INTERVAL
+              value: "15"
+          volumeMounts:
+            - name: script
+              mountPath: /app
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8001
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8001
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: 8000
+            periodSeconds: 10
+      volumes:
+        - name: script
+          configMap:
+            name: system-exporter
+            items:
+              - key: exporter.py
+                path: exporter.py
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: system-exporter
+  namespace: monitoring
+  labels:
+    app: system-exporter
+    release: kube-prometheus-stack
+spec:
+  ports:
+    - port: 8000
+      targetPort: 8000
+      name: metrics
+    - port: 8001
+      targetPort: 8001
+      name: health
+  selector:
+    app: system-exporter
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: system-exporter
+  namespace: monitoring
+  labels:
+    app: system-exporter
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app: system-exporter
+  namespaceSelector:
+    matchNames:
+      - monitoring
+  endpoints:
+    - port: metrics
+      interval: 30s
+      path: /metrics
