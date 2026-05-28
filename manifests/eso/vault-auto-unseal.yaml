@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vault-auto-unseal
+  namespace: vault
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vault-auto-unseal
+  template:
+    metadata:
+      labels:
+        app: vault-auto-unseal
+    spec:
+      serviceAccountName: default
+      containers:
+        - name: auto-unseal
+          image: hashicorp/vault:1.21.2
+          command:
+            - sh
+            - -c
+            - |
+              apk add -q jq
+              VAULT_ADDR="http://vault.vault:8200"
+              while true; do
+                SEALED=$(wget -qO- "$VAULT_ADDR/v1/sys/seal-status" 2>/dev/null | jq -r '.sealed // empty' 2>/dev/null)
+                if [ "$SEALED" = "true" ]; then
+                  echo "Vault is sealed. Unsealing..."
+                  for key in $(jq -r 'to_entries[] | select(.key | startswith("unseal-key")) | .value' /vault/creds/keys 2>/dev/null); do
+                    wget -qO- --post-data="{\"key\":\"$key\"}" "$VAULT_ADDR/v1/sys/unseal" > /dev/null 2>&1
+                  done
+                  echo "Unseal complete."
+                fi
+                sleep 60
+              done
+          volumeMounts:
+            - name: vault-creds
+              mountPath: /vault/creds
+              readOnly: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 50m
+              memory: 64Mi
+      volumes:
+        - name: vault-creds
+          secret:
+            secretName: vault-creds
