@@ -164,7 +164,7 @@ data:
                 "type": "prometheus",
                 "uid": "prometheus"
               },
-              "expr": "count(increase(minecraft_play_time_ticks_total[5m]) > 0)",
+              "expr": "count(increase(minecraft_play_time_ticks_total[5m]) > 0) or vector(0)",
               "instant": false,
               "refId": "A"
             }
