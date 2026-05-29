@@ -19,7 +19,7 @@ prometheusOperator:
 prometheus:
   prometheusSpec:
     routePrefix: /prometheus
-    externalUrl: http://192.168.1.192/prometheus
+    externalUrl: https://chai-homelab.com/prometheus
     resources:
       requests:
         cpu: 200m
@@ -86,8 +86,8 @@ grafana:
     size: 2Gi
   grafana.ini:
     server:
-      domain: "192.168.1.192"
-      root_url: "http://192.168.1.192/grafana/"
+      domain: "chai-homelab.com"
+      root_url: "https://chai-homelab.com/grafana/"
       serve_from_sub_path: false
   sidecar:
     dashboards:

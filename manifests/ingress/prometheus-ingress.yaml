@@ -19,5 +19,5 @@ spec:
                   number: 9090
   tls:
     - hosts:
-        - "192.168.1.192"
-      secretName: homelab-tls
+        - "chai-homelab.com"
+      secretName: chai-homelab-tls
