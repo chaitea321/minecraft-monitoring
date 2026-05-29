@@ -1,6 +1,10 @@
 ---
 # kube-prometheus-stack values for k3s homelab
 
+# CRDs are already installed — disable the subchart to avoid ArgoCD annotation size issues
+crds:
+  enabled: false
+
 # Disable admission webhooks to avoid TLS cert issues on single-node
 prometheusOperator:
   admissionWebhooks:
@@ -76,10 +80,7 @@ grafana:
     limits:
       cpu: 200m
       memory: 256Mi
-  admin:
-    existingSecret: grafana-admin-creds
-    userKey: admin-user
-    passwordKey: admin-password
+  adminPassword: "Rufina35"
   persistence:
     enabled: true
     storageClassName: local-path
