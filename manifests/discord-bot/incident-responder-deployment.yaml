@@ -30,6 +30,10 @@ spec:
               value: http://kube-prometheus-stack-prometheus.monitoring:9090/prometheus
             - name: LOKI_URL
               value: http://loki-gateway.monitoring:80
+            - name: OLLAMA_URL
+              value: http://ollama.ollama:11434
+            - name: OLLAMA_MODEL
+              value: phi3
           resources:
             limits:
               memory: 128Mi

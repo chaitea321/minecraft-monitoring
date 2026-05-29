@@ -22,6 +22,8 @@ LOKI_URL = os.environ.get(
     "LOKI_URL",
     "http://loki-gateway.monitoring:80",
 )
+OLLAMA_URL = os.environ.get("OLLAMA_URL", "")  # empty = skip AI
+OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "phi3")
 
 # Track alert fingerprints to avoid duplicate diagnostics
 RECENT_ALERTS = {}
@@ -91,6 +93,26 @@ async def query_loki(query: str, minutes: int = 5) -> str:
     except Exception as e:
         log.warning("Loki query failed: %s", e)
     return ""
+
+
+async def query_ollama(prompt: str, timeout: int = 30) -> str | None:
+    if not OLLAMA_URL:
+        return None
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{OLLAMA_URL}/api/generate",
+                json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": False},
+                timeout=aiohttp.ClientTimeout(total=timeout),
+            ) as resp:
+                if resp.status != 200:
+                    log.warning("Ollama returned %s", resp.status)
+                    return None
+                data = await resp.json()
+                return data.get("response", "").strip()
+    except Exception as e:
+        log.warning("Ollama query failed: %s", e)
+    return None
 
 
 async def gather_diagnostics() -> dict:
@@ -201,6 +223,18 @@ def build_diagnostic_embed(alert: dict, diag: dict) -> dict:
     }
 
 
+def build_ai_embed(alert: dict, analysis: str) -> dict:
+    labels = alert.get("labels", {})
+    name = labels.get("alertname", "Unknown")
+    severity = labels.get("severity", "info")
+    return {
+        "title": f"🤖 {name} — AI Analysis",
+        "description": analysis[:2000],
+        "color": severity_color(severity),
+        "footer": {"text": f"Model: {OLLAMA_MODEL}"},
+    }
+
+
 async def handle_webhook(request: web.Request) -> web.Response:
     try:
         payload = await request.json()
@@ -233,6 +267,24 @@ async def handle_webhook(request: web.Request) -> web.Response:
             # 3. Post diagnostic embed
             diag_embed = build_diagnostic_embed(alert, diag)
             await post_discord(diag_embed)
+
+            # 4. AI analysis via Ollama (best-effort, never blocks)
+            try:
+                prompt = (
+                    f"Analyze this Minecraft server alert.\n"
+                    f"Alert: {name} ({labels.get('severity', '?')})\n"
+                    f"TPS: {diag['tps']}, Heap: {diag['heap_pct']}%, "
+                    f"Load: {diag['load']}, Players: {diag['players']}\n"
+                    f"Recent logs:\n{diag['logs_sample'][:800]}\n\n"
+                    f"What is likely causing this issue and what should "
+                    f"the admin do? Be concise (3-5 sentences)."
+                )
+                analysis = await query_ollama(prompt)
+                if analysis:
+                    ai_embed = build_ai_embed(alert, analysis)
+                    await post_discord(ai_embed)
+            except Exception as e:
+                log.warning("AI analysis failed (non-critical): %s", e)
 
             log.info("Completed diagnostics for: %s", name)
 
