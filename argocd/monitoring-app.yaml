@@ -11,6 +11,7 @@ spec:
     helm:
       valueFiles:
         - values.yaml
+      skipCrds: true
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
