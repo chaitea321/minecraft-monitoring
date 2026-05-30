@@ -28,7 +28,7 @@ spec:
               value: "2048"
           resources:
             limits:
-              memory: 3Gi
+              memory: 4Gi
               cpu: "4"
             requests:
               memory: 2Gi

@@ -16,7 +16,12 @@ async def query_ollama(prompt: str, timeout: int = 60) -> str:
     async with aiohttp.ClientSession() as session:
         async with session.post(
             f"{OLLAMA_URL}/api/generate",
-            json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": False},
+            json={
+                "model": OLLAMA_MODEL,
+                "prompt": prompt,
+                "stream": False,
+                "options": {"num_ctx": 2048},
+            },
             timeout=aiohttp.ClientTimeout(total=timeout),
         ) as resp:
             if resp.status != 200:

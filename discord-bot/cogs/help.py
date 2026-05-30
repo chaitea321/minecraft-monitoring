@@ -30,6 +30,21 @@ class Help(commands.Cog):
             name="/backup", value="Save world & trigger backup (admin only)", inline=False
         )
         embed.add_field(
+            name="/ai-status",
+            value="Check if AI model is running",
+            inline=False,
+        )
+        embed.add_field(
+            name="/analyze-lag",
+            value="AI-powered server lag analysis",
+            inline=False,
+        )
+        embed.add_field(
+            name="/summarize",
+            value="AI summary of recent server logs",
+            inline=False,
+        )
+        embed.add_field(
             name="/help", value="Show this message", inline=False
         )
         await interaction.response.send_message(embed=embed)

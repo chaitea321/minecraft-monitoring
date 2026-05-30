@@ -11,7 +11,7 @@ class Bot(commands.Bot):
         self.rcon = rcon
 
     async def setup_hook(self):
-        for ext in ["cogs.status", "cogs.admin", "cogs.help"]:
+        for ext in ["cogs.status", "cogs.admin", "cogs.help", "cogs.ai"]:
             await self.load_extension(ext)
         await self.tree.sync()
 
