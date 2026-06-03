@@ -36,10 +36,10 @@ spec:
               value: phi3
           resources:
             limits:
-              memory: 128Mi
+              memory: 256Mi
               cpu: "1"
             requests:
-              memory: 64Mi
+              memory: 128Mi
               cpu: 100m
           livenessProbe:
             httpGet:

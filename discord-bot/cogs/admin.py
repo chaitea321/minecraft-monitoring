@@ -41,7 +41,7 @@ class Admin(commands.Cog):
 
         await interaction.response.defer()
         try:
-            result = self.bot.rcon.command(f"whitelist {action} {player}")
+            result = await self.bot.rcon.command(f"whitelist {action} {player}")
             await interaction.followup.send(
                 f"**/whitelist {action} {player}**\n```{result}```"
             )
@@ -59,7 +59,7 @@ class Admin(commands.Cog):
 
         await interaction.response.defer()
         try:
-            save_result = self.bot.rcon.command("save-all")
+            save_result = await self.bot.rcon.command("save-all")
             await interaction.followup.send(
                 f"**Backup initiated**\nMinecraft save-all: OK\n```{save_result}```\nThe automated backup runs daily at 4 AM CST."
             )

@@ -9,6 +9,7 @@ OLLAMA_URL = os.environ.get(
     "OLLAMA_URL", "http://ollama.ollama:11434"
 )
 OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "phi3")
+LOKI_URL = os.environ.get("LOKI_URL", "http://loki-gateway.monitoring:80")
 
 
 async def query_ollama(
@@ -148,7 +149,7 @@ class AI(commands.Cog):
                     "limit": "100",
                 }
                 async with session.get(
-                    f"http://loki-gateway.monitoring:80/loki/api/v1/query_range",
+                    f"{LOKI_URL}/loki/api/v1/query_range",
                     params=params,
                     timeout=aiohttp.ClientTimeout(total=10),
                 ) as resp:
