@@ -21,7 +21,7 @@ jobs:
         with:
           file_or_dir: .
           config_file: .yamllint.yaml
-        continue-on-error: true
+ 
 
   helm-lint:
     name: Helm Lint
@@ -61,18 +61,19 @@ jobs:
         run: |
           find manifests/ -name '*.yaml' -type f | sort | while IFS= read -r f; do
             echo "  Validating: $f"
-            kubeconform -summary -ignore-missing-schemas "$f" || true
+            kubeconform -summary -ignore-missing-schemas "$f"
           done
 
       - name: Template and validate Helm charts
         run: |
           for chart in helm/kube-prometheus-stack loki loki/promtail-wrapper; do
             echo "=== $chart ==="
-            if helm template test-release "$chart" 2>/dev/null | kubeconform -summary -ignore-missing-schemas -stdin; then
-              echo "  OK"
-            else
-              echo "  FAILED to validate (may be expected for CRDs)"
-            fi
+            if helm template test-release "$chart" 2>&1 | kubeconform -summary -ignore-missing-schemas -stdin; then
+               echo "  OK"
+             else
+               echo "FAILED to validate $chart"
+               exit 1
+             fi
           done
 
   docker-build:
@@ -110,3 +111,13 @@ jobs:
           tags: |
             evince55/incident-responder:latest
             evince55/incident-responder:${{ github.sha }}
+
+      - name: Build and push health-checker
+        uses: docker/build-push-action@v6
+        with:
+          context: manifests/health-checker
+          file: manifests/health-checker/Dockerfile
+          push: true
+          tags: |
+            evince55/health-checker:latest
+            evince55/health-checker:${{ github.sha }}
