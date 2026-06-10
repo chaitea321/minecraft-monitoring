@@ -98,26 +98,19 @@ kube-prometheus-stack:
         cpu: 200m
         memory: 1Gi
     sidecar:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          cpu: 50m
+          memory: 128Mi
       dashboards:
         enabled: true
         label: grafana_dashboard
-        resources:
-          requests:
-            cpu: 10m
-            memory: 32Mi
-          limits:
-            cpu: 50m
-            memory: 128Mi
       datasources:
         enabled: true
         label: grafana_datasource
-        resources:
-          requests:
-            cpu: 10m
-            memory: 32Mi
-          limits:
-            cpu: 50m
-            memory: 128Mi
         additionalDataSources:
           - name: Prometheus
             type: prometheus
