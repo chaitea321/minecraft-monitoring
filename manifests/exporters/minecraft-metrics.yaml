@@ -13,8 +13,8 @@ spec:
       port: 5556
       targetPort: 5556
     - name: rcon-metrics
-      port: 9150
-      targetPort: 9150
+      port: 8080
+      targetPort: 8080
   selector:
     app: minecraft
 ---
