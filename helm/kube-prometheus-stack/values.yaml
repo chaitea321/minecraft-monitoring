@@ -31,6 +31,15 @@ kube-prometheus-stack:
         limits:
           cpu: 500m
           memory: 1Gi
+      configReloaders:
+        enabled: true
+        resources:
+          requests:
+            cpu: 25m
+            memory: 32Mi
+          limits:
+            cpu: 50m
+            memory: 64Mi
       storageSpec:
         volumeClaimTemplate:
           spec:
@@ -54,6 +63,15 @@ kube-prometheus-stack:
         limits:
           cpu: 100m
           memory: 100Mi
+      configReloaders:
+        enabled: true
+        resources:
+          requests:
+            cpu: 25m
+            memory: 32Mi
+          limits:
+            cpu: 50m
+            memory: 64Mi
       storage:
         volumeClaimTemplate:
           spec:
@@ -79,23 +97,27 @@ kube-prometheus-stack:
       limits:
         cpu: 200m
         memory: 1Gi
-    adminPassword: "Rufina35"
-    persistence:
-      enabled: true
-      storageClassName: local-path
-      size: 2Gi
-    grafana.ini:
-      server:
-        domain: "chai-homelab.com"
-        root_url: "https://chai-homelab.com/grafana/"
-        serve_from_sub_path: true
     sidecar:
       dashboards:
         enabled: true
         label: grafana_dashboard
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            cpu: 50m
+            memory: 128Mi
       datasources:
         enabled: true
         label: grafana_datasource
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            cpu: 50m
+            memory: 128Mi
         additionalDataSources:
           - name: Prometheus
             type: prometheus
@@ -106,6 +128,26 @@ kube-prometheus-stack:
             jsonData:
               httpMethod: POST
               timeInterval: 30s
+    sidecarResources:
+      requests:
+        cpu: 25m
+        memory: 32Mi
+      limits:
+        cpu: 50m
+        memory: 64Mi
+    admin:
+      existingSecret: grafana-admin-credentials
+      userKey: admin-user
+      passwordKey: admin-password
+    persistence:
+      enabled: true
+      storageClassName: local-path
+      size: 2Gi
+    grafana.ini:
+      server:
+        domain: "chai-homelab.com"
+        root_url: "https://chai-homelab.com/grafana/"
+        serve_from_sub_path: true
 
   # k3s does not run etcd
   kubeEtcd:

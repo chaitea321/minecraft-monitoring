@@ -1,243 +1,134 @@
-# Per-namespace ResourceQuota + LimitRange
-# Prevents total CPU/memory/pods exceeding safe thresholds
-# Total system: 16GB RAM, Ryzen 7 5700U (8 cores)
+---
+# ResourceQuotas prevent any single namespace from consuming
+# more than its fair share of CPU/memory/pods.
+#
+# Limits are set ~20-50% above current usage for growth headroom.
+# Total system: 16 cores, 15674Mi RAM.
 
----
-# default namespace — Minecraft + Homepage
-# Minecraft is the heaviest workload (~4GB), Homepage is light
-apiVersion: v1
-kind: ResourceQuota
-metadata:
-  name: default-quota
-  namespace: default
-spec:
-  hard:
-    requests.cpu: "2"
-    requests.memory: 5Gi
-    limits.cpu: "4"
-    limits.memory: 8Gi
-    pods: "10"
-    persistentvolumeclaims: "5"
-    services: "5"
-    configmaps: "10"
-    secrets: "10"
----
-apiVersion: v1
-kind: LimitRange
-metadata:
-  name: default-limits
-  namespace: default
-spec:
-  limits:
-    - default:
-        memory: 2Gi
-        cpu: "1"
-      defaultRequest:
-        memory: 256Mi
-        cpu: "100m"
-      max:
-        memory: 4Gi
-        cpu: "2"
-      type: Container
----
-# monitoring namespace — Prometheus, Grafana, Loki, Promtail
-# Heaviest namespace: ~2.2GB total
+# --- monitoring (Prometheus + Grafana + Loki + Promtail + Exporters) ---
 apiVersion: v1
 kind: ResourceQuota
 metadata:
   name: monitoring-quota
   namespace: monitoring
+  labels:
+    app: resource-quotas
 spec:
   hard:
-    requests.cpu: "4"
-    requests.memory: 6Gi
-    limits.cpu: "6"
-    limits.memory: 8Gi
-    pods: "25"
-    persistentvolumeclaims: "5"
-    services: "10"
-    configmaps: "15"
-    secrets: "15"
+    requests.cpu: "3000m"
+    requests.memory: 3Gi
+    limits.cpu: "4000m"
+    limits.memory: 5Gi
+    pods: "20"
 ---
-apiVersion: v1
-kind: LimitRange
-metadata:
-  name: monitoring-limits
-  namespace: monitoring
-spec:
-  limits:
-    - default:
-        memory: 1Gi
-        cpu: "500m"
-      defaultRequest:
-        memory: "128Mi"
-        cpu: "100m"
-      max:
-        memory: 4Gi
-        cpu: "2"
-      type: Container
----
-# discord-bot namespace — discord-bot + incident-responder
+# --- default (Minecraft + Homepage) ---
 apiVersion: v1
 kind: ResourceQuota
 metadata:
-  name: discord-bot-quota
-  namespace: discord-bot
+  name: default-quota
+  namespace: default
+  labels:
+    app: resource-quotas
 spec:
   hard:
-    requests.cpu: "500m"
-    requests.memory: "512Mi"
-    limits.cpu: "1"
-    limits.memory: 1Gi
-    pods: "5"
-    persistentvolumeclaims: "2"
-    services: "3"
+    requests.cpu: "2000m"
+    requests.memory: 2Gi
+    limits.cpu: "4000m"
+    limits.memory: 5Gi
+    pods: "10"
 ---
-apiVersion: v1
-kind: LimitRange
-metadata:
-  name: discord-bot-limits
-  namespace: discord-bot
-spec:
-  limits:
-    - default:
-        memory: "512Mi"
-        cpu: "500m"
-      defaultRequest:
-        memory: "128Mi"
-        cpu: "100m"
-      max:
-        memory: 2Gi
-        cpu: "2"
-      type: Container
----
-# ollama namespace — Ollama model server
+# --- ollama (Ollama inference) ---
 apiVersion: v1
 kind: ResourceQuota
 metadata:
   name: ollama-quota
   namespace: ollama
+  labels:
+    app: resource-quotas
 spec:
   hard:
-    requests.cpu: "2"
-    requests.memory: 4Gi
-    limits.cpu: "4"
-    limits.memory: 6Gi
-    pods: "3"
-    persistentvolumeclaims: "2"
+    requests.cpu: "1500m"
+    requests.memory: 3Gi
+    limits.cpu: "5000m"
+    limits.memory: 5Gi
+    pods: "5"
 ---
-apiVersion: v1
-kind: LimitRange
-metadata:
-  name: ollama-limits
-  namespace: ollama
-spec:
-  limits:
-    - default:
-        memory: 2Gi
-        cpu: "1"
-      defaultRequest:
-        memory: "512Mi"
-        cpu: "250m"
-      max:
-        memory: 8Gi
-        cpu: "4"
-      type: Container
----
-# argocd namespace — ArgoCD components
+# --- argocd (ArgoCD server + controller + Redis + Dex) ---
 apiVersion: v1
 kind: ResourceQuota
 metadata:
   name: argocd-quota
   namespace: argocd
+  labels:
+    app: resource-quotas
 spec:
   hard:
-    requests.cpu: "1"
+    requests.cpu: "1000m"
     requests.memory: 1Gi
-    limits.cpu: "2"
-    limits.memory: 2Gi
+    limits.cpu: "3000m"
+    limits.memory: 4Gi
     pods: "10"
-    persistentvolumeclaims: "3"
-    services: "5"
 ---
+# --- discord-bot (Discord bot + Incident Responder) ---
 apiVersion: v1
-kind: LimitRange
+kind: ResourceQuota
 metadata:
-  name: argocd-limits
-  namespace: argocd
+  name: discord-bot-quota
+  namespace: discord-bot
+  labels:
+    app: resource-quotas
 spec:
-  limits:
-    - default:
-        memory: "512Mi"
-        cpu: "500m"
-      defaultRequest:
-        memory: "128Mi"
-        cpu: "100m"
-      max:
-        memory: 2Gi
-        cpu: "2"
-      type: Container
+  hard:
+    requests.cpu: "500m"
+    requests.memory: 512Mi
+    limits.cpu: "2000m"
+    limits.memory: 1Gi
+    pods: "5"
 ---
-# cert-manager namespace — Certificate management
+# --- cert-manager (cert-manager + cainjector + webhook) ---
 apiVersion: v1
 kind: ResourceQuota
 metadata:
   name: cert-manager-quota
   namespace: cert-manager
+  labels:
+    app: resource-quotas
 spec:
   hard:
-    requests.cpu: "500m"
-    requests.memory: "256Mi"
-    limits.cpu: "1"
-    limits.memory: "512Mi"
+    requests.cpu: "200m"
+    requests.memory: 128Mi
+    limits.cpu: "500m"
+    limits.memory: 256Mi
     pods: "5"
 ---
+# --- kube-system (CoreDNS + Traefik + metrics-server + svclb) ---
 apiVersion: v1
-kind: LimitRange
+kind: ResourceQuota
 metadata:
-  name: cert-manager-limits
-  namespace: cert-manager
+  name: kube-system-quota
+  namespace: kube-system
+  labels:
+    app: resource-quotas
 spec:
-  limits:
-    - default:
-        memory: "512Mi"
-        cpu: "500m"
-      defaultRequest:
-        memory: "128Mi"
-        cpu: "100m"
-      max:
-        memory: 2Gi
-        cpu: "2"
-      type: Container
+  hard:
+    requests.cpu: "1500m"
+    requests.memory: 1Gi
+    limits.cpu: "3000m"
+    limits.memory: 2Gi
+    pods: "15"
 ---
-# eso-system namespace — External Secrets Operator
+# --- eso-system (External Secrets Operator) ---
 apiVersion: v1
 kind: ResourceQuota
 metadata:
   name: eso-system-quota
   namespace: eso-system
+  labels:
+    app: resource-quotas
 spec:
   hard:
-    requests.cpu: "500m"
-    requests.memory: "256Mi"
-    limits.cpu: "1"
-    limits.memory: "512Mi"
+    requests.cpu: "200m"
+    requests.memory: 256Mi
+    limits.cpu: "500m"
+    limits.memory: 512Mi
     pods: "5"
----
-apiVersion: v1
-kind: LimitRange
-metadata:
-  name: eso-system-limits
-  namespace: eso-system
-spec:
-  limits:
-    - default:
-        memory: "512Mi"
-        cpu: "500m"
-      defaultRequest:
-        memory: "128Mi"
-        cpu: "100m"
-      max:
-        memory: 2Gi
-        cpu: "2"
-      type: Container
