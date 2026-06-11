@@ -6,7 +6,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: traefik
     traefik.ingress.kubernetes.io/router.entrypoints: web
-    traefik.ingress.kubernetes.io/router.middlewares: monitoring-loki-redirect@kubernetescrd,monitoring-loki-stripprefix@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: monitoring-loki-combined@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
