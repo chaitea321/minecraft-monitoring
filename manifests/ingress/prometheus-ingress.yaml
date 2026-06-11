@@ -6,7 +6,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: traefik
     traefik.ingress.kubernetes.io/router.entrypoints: web
-    traefik.ingress.kubernetes.io/router.middlewares: prometheus-root-redirect.monitoring@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: monitoring-prometheus-root-redirect@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
