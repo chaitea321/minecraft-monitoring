@@ -40,13 +40,6 @@ kube-prometheus-stack:
           limits:
             cpu: 50m
             memory: 64Mi
-      initConfigReloaderResources:
-        requests:
-          cpu: 25m
-          memory: 32Mi
-        limits:
-          cpu: 50m
-          memory: 64Mi
       storageSpec:
         volumeClaimTemplate:
           spec:

@@ -15,10 +15,10 @@ metadata:
     app: resource-quotas
 spec:
   hard:
-    requests.cpu: "3000m"
-    requests.memory: 3Gi
-    limits.cpu: "4000m"
-    limits.memory: 5Gi
+    requests.cpu: "4"
+    requests.memory: 4Gi
+    limits.cpu: "6"
+    limits.memory: 7Gi
     pods: "20"
 ---
 # --- default (Minecraft + Homepage) ---
