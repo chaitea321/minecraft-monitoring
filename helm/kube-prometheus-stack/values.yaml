@@ -97,6 +97,14 @@ kube-prometheus-stack:
       limits:
         cpu: 200m
         memory: 1Gi
+    initChownData:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 100m
+          memory: 128Mi
     sidecar:
       resources:
         requests:
@@ -141,6 +149,9 @@ kube-prometheus-stack:
         domain: "chai-homelab.com"
         root_url: "https://chai-homelab.com/grafana/"
         serve_from_sub_path: true
+      auth:
+        login_maximum_inactive_lifetime_duration: "7d"
+        login_maximum_lifetime_duration: "30d"
 
   # k3s does not run etcd
   kubeEtcd:
