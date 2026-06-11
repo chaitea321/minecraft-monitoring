@@ -4,671 +4,196 @@ metadata:
   name: minecraft-server-dashboard
   namespace: monitoring
   labels:
-    grafana_dashboard: "1"
+    grafana_dashboard: '1'
     app.kubernetes.io/instance: monitoring
 data:
-  server.json: |
-    {
-      "annotations": {
-        "list": [
-          {
-            "builtIn": 1,
-            "datasource": {
-              "type": "datasource",
-              "uid": "grafana"
-            },
-            "enable": true,
-            "hide": true,
-            "iconColor": "rgba(0, 211, 255, 1)",
-            "name": "Annotations & Alerts",
-            "type": "dashboard"
-          }
-        ]
-      },
-      "description": "Minecraft Server Monitoring - heathcliff26/minecraft-exporter",
-      "editable": true,
-      "fiscalYearStartMonth": 0,
-      "graphTooltip": 0,
-      "links": [],
-      "panels": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 10,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "showValues": false,
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "links": [],
-              "mappings": [],
-              "max": 20,
-              "min": 0,
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": 0
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "short"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 0
-          },
-          "id": 5,
-          "options": {
-            "alertThreshold": true,
-            "legend": {
-              "calcs": [],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "hideZeros": false,
-              "mode": "multi",
-              "sort": "none"
-            }
-          },
-          "pluginVersion": "12.3.0",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${datasource}"
-              },
-              "editorMode": "code",
-              "expr": "paper_tps_1m{instance=~\"$instance\"}",
-              "legendFormat": "1 Minute",
-              "range": true,
-              "refId": "A"
-            },
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${datasource}"
-              },
-              "editorMode": "code",
-              "expr": "paper_tps_5m{instance=~\"$instance\"}",
-              "legendFormat": "5 Minute",
-              "range": true,
-              "refId": "B"
-            },
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${datasource}"
-              },
-              "editorMode": "code",
-              "expr": "paper_tps_15m{instance=~\"$instance\"}",
-              "legendFormat": "15 Minute",
-              "range": true,
-              "refId": "C"
-            }
-          ],
-          "title": "TPS",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 10,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "showValues": false,
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "links": [],
-              "mappings": [],
-              "max": 20,
-              "min": 0,
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": 0
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "short"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 0
-          },
-          "id": 18,
-          "options": {
-            "alertThreshold": true,
-            "legend": {
-              "calcs": [],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "hideZeros": false,
-              "mode": "multi",
-              "sort": "none"
-            }
-          },
-          "pluginVersion": "12.3.0",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${datasource}"
-              },
-              "editorMode": "code",
-              "expr": "sum(paper_tps_1m{instance=~\"$instance\"})",
-              "legendFormat": "1 Minute",
-              "range": true,
-              "refId": "A"
-            },
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${datasource}"
-              },
-              "editorMode": "code",
-              "expr": "sum(paper_tps_5m{instance=~\"$instance\"})",
-              "legendFormat": "5 Minute",
-              "range": true,
-              "refId": "C"
-            },
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${datasource}"
-              },
-              "editorMode": "code",
-              "expr": "sum(paper_tps_15m{instance=~\"$instance\"})",
-              "legendFormat": "15 Minute",
-              "range": true,
-              "refId": "D"
-            }
-          ],
-          "title": "Paper TPS",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 10,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "showValues": false,
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "links": [],
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": 0
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "s"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 8
-          },
-          "id": 3,
-          "options": {
-            "alertThreshold": true,
-            "legend": {
-              "calcs": [],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "hideZeros": false,
-              "mode": "multi",
-              "sort": "none"
-            }
-          },
-          "pluginVersion": "12.3.0",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${datasource}"
-              },
-              "editorMode": "code",
-              "expr": "minecraft_stat_playtime{instance=~\"$instance\"} / 20",
-              "legendFormat": "{{ player }}",
-              "range": true,
-              "refId": "A"
-            }
-          ],
-          "title": "Play Time",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 10,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "showValues": false,
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "links": [],
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": 0
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "short"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 8
-          },
-          "id": 17,
-          "options": {
-            "alertThreshold": true,
-            "legend": {
-              "calcs": [],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "hideZeros": false,
-              "mode": "multi",
-              "sort": "none"
-            }
-          },
-          "pluginVersion": "12.3.0",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${datasource}"
-              },
-              "editorMode": "code",
-              "expr": "sum(dynmap_tile_render_stat{instance=~\"$instance\"}) by (type)",
-              "legendFormat": "{{ type }}",
-              "range": true,
-              "refId": "A"
-            }
-          ],
-          "title": "Score",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 10,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "showValues": false,
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "links": [],
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": 0
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "short"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 16
-          },
-          "id": 2,
-          "options": {
-            "alertThreshold": true,
-            "legend": {
-              "calcs": [],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "hideZeros": false,
-              "mode": "multi",
-              "sort": "none"
-            }
-          },
-          "pluginVersion": "12.3.0",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${datasource}"
-              },
-              "editorMode": "code",
-              "expr": "minecraft_stat_score{instance=~\"$instance\"}",
-              "legendFormat": "{{ player }}",
-              "range": true,
-              "refId": "A"
-            }
-          ],
-          "title": "Score",
-          "type": "timeseries"
-        }
-      ],
-          "options": {
-            "alertThreshold": true,
-            "legend": {
-              "calcs": [],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "hideZeros": false,
-              "mode": "multi",
-              "sort": "none"
-            }
-          },
-          "pluginVersion": "12.3.0",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${datasource}"
-              },
-              "editorMode": "code",
-              "expr": "dynmap_chunk_loading_duration{instance=~\"$instance\"}",
-              "legendFormat": "{{ type }}",
-              "range": true,
-              "refId": "A"
-            }
-          ],
-          "title": "Dynmap Chunk Loading Duration",
-          "type": "timeseries"
-        }
-      ],
-      "preload": false,
-      "refresh": "5s",
-      "schemaVersion": 42,
-      "tags": [
-        "minecraft",
-        "papermc"
-      ],
-      "templating": {
-        "list": [
-          {
-            "current": {
-              "selected": true,
-              "text": "default",
-              "value": "default"
-            },
-            "label": "Data source",
-            "name": "datasource",
-            "options": [],
-            "query": "prometheus",
-            "refresh": 1,
-            "regex": "",
-            "type": "datasource"
-          },
-          {
-            "current": {},
-            "datasource": {
-              "type": "prometheus",
-              "uid": "${datasource}"
-            },
-            "definition": "label_values({job=\"minecraft-metrics\"},instance)",
-            "includeAll": true,
-            "label": "Instance",
-            "multi": true,
-            "name": "instance",
-            "options": [],
-            "query": {
-              "query": "label_values({job=\"minecraft-metrics\"},instance)",
-              "refId": "prometheusVariableQueryEditor-VariableQuery"
-            },
-            "refresh": 2,
-            "regex": "",
-            "type": "query"
-          }
-        ]
-      },
-      "time": {
-        "from": "now-1h",
-        "to": "now"
-      },
-      "timepicker": {},
-      "timezone": "browser",
-      "title": "Minecraft - Server",
-      "uid": "minecraft-server-heathcliff",
-      "version": 1
-    }
+  server.json: "{\n  \"annotations\": {\n    \"list\": [\n      {\n        \"builtIn\"\
+    : 1,\n        \"datasource\": {\n          \"type\": \"datasource\",\n       \
+    \   \"uid\": \"grafana\"\n        },\n        \"enable\": true,\n        \"hide\"\
+    : true,\n        \"iconColor\": \"rgba(0, 211, 255, 1)\",\n        \"name\": \"\
+    Annotations & Alerts\",\n        \"type\": \"dashboard\"\n      }\n    ]\n  },\n\
+    \  \"description\": \"Minecraft Server Monitoring - heathcliff26/minecraft-exporter\"\
+    ,\n  \"editable\": true,\n  \"fiscalYearStartMonth\": 0,\n  \"graphTooltip\":\
+    \ 0,\n  \"links\": [],\n  \"panels\": [\n    {\n      \"datasource\": {\n    \
+    \    \"type\": \"prometheus\",\n        \"uid\": \"${datasource}\"\n      },\n\
+    \      \"fieldConfig\": {\n        \"defaults\": {\n          \"color\": {\n \
+    \           \"mode\": \"palette-classic\"\n          },\n          \"custom\"\
+    : {\n            \"axisBorderShow\": false,\n            \"axisCenteredZero\"\
+    : false,\n            \"axisColorMode\": \"text\",\n            \"axisLabel\"\
+    : \"\",\n            \"axisPlacement\": \"auto\",\n            \"barAlignment\"\
+    : 0,\n            \"barWidthFactor\": 0.6,\n            \"drawStyle\": \"line\"\
+    ,\n            \"fillOpacity\": 10,\n            \"gradientMode\": \"none\",\n\
+    \            \"hideFrom\": {\n              \"legend\": false,\n             \
+    \ \"tooltip\": false,\n              \"viz\": false\n            },\n        \
+    \    \"insertNulls\": false,\n            \"lineInterpolation\": \"linear\",\n\
+    \            \"lineWidth\": 1,\n            \"pointSize\": 5,\n            \"\
+    scaleDistribution\": {\n              \"type\": \"linear\"\n            },\n \
+    \           \"showPoints\": \"never\",\n            \"showValues\": false,\n \
+    \           \"spanNulls\": false,\n            \"stacking\": {\n             \
+    \ \"group\": \"A\",\n              \"mode\": \"none\"\n            },\n      \
+    \      \"thresholdsStyle\": {\n              \"mode\": \"off\"\n            }\n\
+    \          },\n          \"links\": [],\n          \"mappings\": [],\n       \
+    \   \"max\": 20,\n          \"min\": 0,\n          \"thresholds\": {\n       \
+    \     \"mode\": \"absolute\",\n            \"steps\": [\n              {\n   \
+    \             \"color\": \"green\",\n                \"value\": 0\n          \
+    \    },\n              {\n                \"color\": \"red\",\n              \
+    \  \"value\": 80\n              }\n            ]\n          },\n          \"unit\"\
+    : \"short\"\n        },\n        \"overrides\": []\n      },\n      \"gridPos\"\
+    : {\n        \"h\": 8,\n        \"w\": 12,\n        \"x\": 0,\n        \"y\":\
+    \ 0\n      },\n      \"id\": 5,\n      \"options\": {\n        \"alertThreshold\"\
+    : true,\n        \"legend\": {\n          \"calcs\": [],\n          \"displayMode\"\
+    : \"list\",\n          \"placement\": \"bottom\",\n          \"showLegend\": true\n\
+    \        },\n        \"tooltip\": {\n          \"hideZeros\": false,\n       \
+    \   \"mode\": \"multi\",\n          \"sort\": \"none\"\n        }\n      },\n\
+    \      \"pluginVersion\": \"12.3.0\",\n      \"targets\": [\n        {\n     \
+    \     \"datasource\": {\n            \"type\": \"prometheus\",\n            \"\
+    uid\": \"${datasource}\"\n          },\n          \"editorMode\": \"code\",\n\
+    \          \"expr\": \"paper_tps_1m{instance=~\\\"$instance\\\"}\",\n        \
+    \  \"legendFormat\": \"1 Minute\",\n          \"range\": true,\n          \"refId\"\
+    : \"A\"\n        },\n        {\n          \"datasource\": {\n            \"type\"\
+    : \"prometheus\",\n            \"uid\": \"${datasource}\"\n          },\n    \
+    \      \"editorMode\": \"code\",\n          \"expr\": \"paper_tps_5m{instance=~\\\
+    \"$instance\\\"}\",\n          \"legendFormat\": \"5 Minute\",\n          \"range\"\
+    : true,\n          \"refId\": \"B\"\n        },\n        {\n          \"datasource\"\
+    : {\n            \"type\": \"prometheus\",\n            \"uid\": \"${datasource}\"\
+    \n          },\n          \"editorMode\": \"code\",\n          \"expr\": \"paper_tps_15m{instance=~\\\
+    \"$instance\\\"}\",\n          \"legendFormat\": \"15 Minute\",\n          \"\
+    range\": true,\n          \"refId\": \"C\"\n        }\n      ],\n      \"title\"\
+    : \"TPS\",\n      \"type\": \"timeseries\"\n    },\n    {\n      \"datasource\"\
+    : {\n        \"type\": \"prometheus\",\n        \"uid\": \"${datasource}\"\n \
+    \     },\n      \"fieldConfig\": {\n        \"defaults\": {\n          \"color\"\
+    : {\n            \"mode\": \"palette-classic\"\n          },\n          \"custom\"\
+    : {\n            \"axisBorderShow\": false,\n            \"axisCenteredZero\"\
+    : false,\n            \"axisColorMode\": \"text\",\n            \"axisLabel\"\
+    : \"\",\n            \"axisPlacement\": \"auto\",\n            \"barAlignment\"\
+    : 0,\n            \"barWidthFactor\": 0.6,\n            \"drawStyle\": \"line\"\
+    ,\n            \"fillOpacity\": 10,\n            \"gradientMode\": \"none\",\n\
+    \            \"hideFrom\": {\n              \"legend\": false,\n             \
+    \ \"tooltip\": false,\n              \"viz\": false\n            },\n        \
+    \    \"insertNulls\": false,\n            \"lineInterpolation\": \"linear\",\n\
+    \            \"lineWidth\": 1,\n            \"pointSize\": 5,\n            \"\
+    scaleDistribution\": {\n              \"type\": \"linear\"\n            },\n \
+    \           \"showPoints\": \"never\",\n            \"showValues\": false,\n \
+    \           \"spanNulls\": false,\n            \"stacking\": {\n             \
+    \ \"group\": \"A\",\n              \"mode\": \"none\"\n            },\n      \
+    \      \"thresholdsStyle\": {\n              \"mode\": \"off\"\n            }\n\
+    \          },\n          \"links\": [],\n          \"mappings\": [],\n       \
+    \   \"max\": 20,\n          \"min\": 0,\n          \"thresholds\": {\n       \
+    \     \"mode\": \"absolute\",\n            \"steps\": [\n              {\n   \
+    \             \"color\": \"green\",\n                \"value\": 0\n          \
+    \    },\n              {\n                \"color\": \"red\",\n              \
+    \  \"value\": 80\n              }\n            ]\n          },\n          \"unit\"\
+    : \"short\"\n        },\n        \"overrides\": []\n      },\n      \"gridPos\"\
+    : {\n        \"h\": 8,\n        \"w\": 12,\n        \"x\": 12,\n        \"y\"\
+    : 0\n      },\n      \"id\": 18,\n      \"options\": {\n        \"alertThreshold\"\
+    : true,\n        \"legend\": {\n          \"calcs\": [],\n          \"displayMode\"\
+    : \"list\",\n          \"placement\": \"bottom\",\n          \"showLegend\": true\n\
+    \        },\n        \"tooltip\": {\n          \"hideZeros\": false,\n       \
+    \   \"mode\": \"multi\",\n          \"sort\": \"none\"\n        }\n      },\n\
+    \      \"pluginVersion\": \"12.3.0\",\n      \"targets\": [\n        {\n     \
+    \     \"datasource\": {\n            \"type\": \"prometheus\",\n            \"\
+    uid\": \"${datasource}\"\n          },\n          \"editorMode\": \"code\",\n\
+    \          \"expr\": \"sum(paper_tps_1m{instance=~\\\"$instance\\\"})\",\n   \
+    \       \"legendFormat\": \"1 Minute\",\n          \"range\": true,\n        \
+    \  \"refId\": \"A\"\n        },\n        {\n          \"datasource\": {\n    \
+    \        \"type\": \"prometheus\",\n            \"uid\": \"${datasource}\"\n \
+    \         },\n          \"editorMode\": \"code\",\n          \"expr\": \"sum(paper_tps_5m{instance=~\\\
+    \"$instance\\\"})\",\n          \"legendFormat\": \"5 Minute\",\n          \"\
+    range\": true,\n          \"refId\": \"C\"\n        },\n        {\n          \"\
+    datasource\": {\n            \"type\": \"prometheus\",\n            \"uid\": \"\
+    ${datasource}\"\n          },\n          \"editorMode\": \"code\",\n         \
+    \ \"expr\": \"sum(paper_tps_15m{instance=~\\\"$instance\\\"})\",\n          \"\
+    legendFormat\": \"15 Minute\",\n          \"range\": true,\n          \"refId\"\
+    : \"D\"\n        }\n      ],\n      \"title\": \"Paper TPS\",\n      \"type\"\
+    : \"timeseries\"\n    },\n    {\n      \"datasource\": {\n        \"type\": \"\
+    prometheus\",\n        \"uid\": \"${datasource}\"\n      },\n      \"fieldConfig\"\
+    : {\n        \"defaults\": {\n          \"color\": {\n            \"mode\": \"\
+    palette-classic\"\n          },\n          \"custom\": {\n            \"axisBorderShow\"\
+    : false,\n            \"axisCenteredZero\": false,\n            \"axisColorMode\"\
+    : \"text\",\n            \"axisLabel\": \"\",\n            \"axisPlacement\":\
+    \ \"auto\",\n            \"barAlignment\": 0,\n            \"barWidthFactor\"\
+    : 0.6,\n            \"drawStyle\": \"line\",\n            \"fillOpacity\": 10,\n\
+    \            \"gradientMode\": \"none\",\n            \"hideFrom\": {\n      \
+    \        \"legend\": false,\n              \"tooltip\": false,\n             \
+    \ \"viz\": false\n            },\n            \"insertNulls\": false,\n      \
+    \      \"lineInterpolation\": \"linear\",\n            \"lineWidth\": 1,\n   \
+    \         \"pointSize\": 5,\n            \"scaleDistribution\": {\n          \
+    \    \"type\": \"linear\"\n            },\n            \"showPoints\": \"never\"\
+    ,\n            \"showValues\": false,\n            \"spanNulls\": false,\n   \
+    \         \"stacking\": {\n              \"group\": \"A\",\n              \"mode\"\
+    : \"none\"\n            },\n            \"thresholdsStyle\": {\n             \
+    \ \"mode\": \"off\"\n            }\n          },\n          \"links\": [],\n \
+    \         \"mappings\": [],\n          \"thresholds\": {\n            \"mode\"\
+    : \"absolute\",\n            \"steps\": [\n              {\n                \"\
+    color\": \"green\",\n                \"value\": 0\n              },\n        \
+    \      {\n                \"color\": \"red\",\n                \"value\": 80\n\
+    \              }\n            ]\n          },\n          \"unit\": \"s\"\n   \
+    \     },\n        \"overrides\": []\n      },\n      \"gridPos\": {\n        \"\
+    h\": 8,\n        \"w\": 12,\n        \"x\": 0,\n        \"y\": 8\n      },\n \
+    \     \"id\": 3,\n      \"options\": {\n        \"alertThreshold\": true,\n  \
+    \      \"legend\": {\n          \"calcs\": [],\n          \"displayMode\": \"\
+    list\",\n          \"placement\": \"bottom\",\n          \"showLegend\": true\n\
+    \        },\n        \"tooltip\": {\n          \"hideZeros\": false,\n       \
+    \   \"mode\": \"multi\",\n          \"sort\": \"none\"\n        }\n      },\n\
+    \      \"pluginVersion\": \"12.3.0\",\n      \"targets\": [\n        {\n     \
+    \     \"datasource\": {\n            \"type\": \"prometheus\",\n            \"\
+    uid\": \"${datasource}\"\n          },\n          \"editorMode\": \"code\",\n\
+    \          \"expr\": \"minecraft_stat_playtime{instance=~\\\"$instance\\\"} /\
+    \ 20\",\n          \"legendFormat\": \"{{ player }}\",\n          \"range\": true,\n\
+    \          \"refId\": \"A\"\n        }\n      ],\n      \"title\": \"Play Time\"\
+    ,\n      \"type\": \"timeseries\"\n    },\n    {\n      \"datasource\": {\n  \
+    \      \"type\": \"prometheus\",\n        \"uid\": \"${datasource}\"\n      },\n\
+    \      \"fieldConfig\": {\n        \"defaults\": {\n          \"color\": {\n \
+    \           \"mode\": \"palette-classic\"\n          },\n          \"custom\"\
+    : {\n            \"axisBorderShow\": false,\n            \"axisCenteredZero\"\
+    : false,\n            \"axisColorMode\": \"text\",\n            \"axisLabel\"\
+    : \"\",\n            \"axisPlacement\": \"auto\",\n            \"barAlignment\"\
+    : 0,\n            \"barWidthFactor\": 0.6,\n            \"drawStyle\": \"line\"\
+    ,\n            \"fillOpacity\": 10,\n            \"gradientMode\": \"none\",\n\
+    \            \"hideFrom\": {\n              \"legend\": false,\n             \
+    \ \"tooltip\": false,\n              \"viz\": false\n            },\n        \
+    \    \"insertNulls\": false,\n            \"lineInterpolation\": \"linear\",\n\
+    \            \"lineWidth\": 1,\n            \"pointSize\": 5,\n            \"\
+    scaleDistribution\": {\n              \"type\": \"linear\"\n            },\n \
+    \           \"showPoints\": \"never\",\n            \"showValues\": false,\n \
+    \           \"spanNulls\": false,\n            \"stacking\": {\n             \
+    \ \"group\": \"A\",\n              \"mode\": \"none\"\n            },\n      \
+    \      \"thresholdsStyle\": {\n              \"mode\": \"off\"\n            }\n\
+    \          },\n          \"links\": [],\n          \"mappings\": [],\n       \
+    \   \"thresholds\": {\n            \"mode\": \"absolute\",\n            \"steps\"\
+    : [\n              {\n                \"color\": \"green\",\n                \"\
+    value\": 0\n              },\n              {\n                \"color\": \"red\"\
+    ,\n                \"value\": 80\n              }\n            ]\n          },\n\
+    \          \"unit\": \"short\"\n        },\n        \"overrides\": []\n      },\n\
+    \      \"gridPos\": {\n        \"h\": 8,\n        \"w\": 12,\n        \"x\": 12,\n\
+    \        \"y\": 16\n      },\n      \"id\": 2,\n      \"options\": {\n       \
+    \ \"alertThreshold\": true,\n        \"legend\": {\n          \"calcs\": [],\n\
+    \          \"displayMode\": \"list\",\n          \"placement\": \"bottom\",\n\
+    \          \"showLegend\": true\n        },\n        \"tooltip\": {\n        \
+    \  \"hideZeros\": false,\n          \"mode\": \"multi\",\n          \"sort\":\
+    \ \"none\"\n        }\n      },\n      \"pluginVersion\": \"12.3.0\",\n      \"\
+    targets\": [\n        {\n          \"datasource\": {\n            \"type\": \"\
+    prometheus\",\n            \"uid\": \"${datasource}\"\n          },\n        \
+    \  \"editorMode\": \"code\",\n          \"expr\": \"minecraft_stat_score{instance=~\\\
+    \"$instance\\\"}\",\n          \"legendFormat\": \"{{ player }}\",\n         \
+    \ \"range\": true,\n          \"refId\": \"A\"\n        }\n      ],\n      \"\
+    title\": \"Score\",\n      \"type\": \"timeseries\"\n    }\n  ],\n  \"preload\"\
+    : false,\n  \"refresh\": \"5s\",\n  \"schemaVersion\": 42,\n  \"tags\": [\n  \
+    \  \"minecraft\",\n    \"papermc\"\n  ],\n  \"templating\": {\n    \"list\": [\n\
+    \      {\n        \"current\": {\n          \"selected\": true,\n          \"\
+    text\": \"default\",\n          \"value\": \"default\"\n        },\n        \"\
+    label\": \"Data source\",\n        \"name\": \"datasource\",\n        \"options\"\
+    : [],\n        \"query\": \"prometheus\",\n        \"refresh\": 1,\n        \"\
+    regex\": \"\",\n        \"type\": \"datasource\"\n      },\n      {\n        \"\
+    current\": {},\n        \"datasource\": {\n          \"type\": \"prometheus\"\
+    ,\n          \"uid\": \"${datasource}\"\n        },\n        \"definition\": \"\
+    label_values({job=\\\"minecraft-metrics\\\"},instance)\",\n        \"includeAll\"\
+    : true,\n        \"label\": \"Instance\",\n        \"multi\": true,\n        \"\
+    name\": \"instance\",\n        \"options\": [],\n        \"query\": {\n      \
+    \    \"query\": \"label_values({job=\\\"minecraft-metrics\\\"},instance)\",\n\
+    \          \"refId\": \"prometheusVariableQueryEditor-VariableQuery\"\n      \
+    \  },\n        \"refresh\": 2,\n        \"regex\": \"\",\n        \"type\": \"\
+    query\"\n      }\n    ]\n  },\n  \"time\": {\n    \"from\": \"now-1h\",\n    \"\
+    to\": \"now\"\n  },\n  \"timepicker\": {},\n  \"timezone\": \"browser\",\n  \"\
+    title\": \"Minecraft - Server\",\n  \"uid\": \"minecraft-server-heathcliff\",\n\
+    \  \"version\": 1\n}\n"
