@@ -17,7 +17,3 @@ spec:
                 name: homepage-service
                 port:
                   number: 3000
-  tls:
-    - hosts:
-        - "chai-homelab.com"
-      secretName: chai-homelab-tls

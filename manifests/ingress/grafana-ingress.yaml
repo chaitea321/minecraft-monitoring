@@ -24,7 +24,3 @@ spec:
                 name: kube-prometheus-stack-grafana
                 port:
                   number: 80
-  tls:
-    - hosts:
-        - "chai-homelab.com"
-      secretName: chai-homelab-tls

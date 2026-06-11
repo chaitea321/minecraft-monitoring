@@ -5,7 +5,7 @@ metadata:
   namespace: monitoring
   annotations:
     kubernetes.io/ingress.class: traefik
-    traefik.ingress.kubernetes.io/router.middlewares: monitoring-prometheus-root-redirect@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: prometheus-root-redirect.monitoring@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
@@ -18,7 +18,3 @@ spec:
                 name: kube-prometheus-stack-prometheus
                 port:
                   number: 9090
-  tls:
-    - hosts:
-        - "chai-homelab.com"
-      secretName: chai-homelab-tls
