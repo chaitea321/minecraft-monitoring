@@ -85,22 +85,6 @@ spec:
     limits.memory: 1Gi
     pods: "5"
 ---
-# --- cert-manager (cert-manager + cainjector + webhook) ---
-apiVersion: v1
-kind: ResourceQuota
-metadata:
-  name: cert-manager-quota
-  namespace: cert-manager
-  labels:
-    app: resource-quotas
-spec:
-  hard:
-    requests.cpu: "200m"
-    requests.memory: 128Mi
-    limits.cpu: "500m"
-    limits.memory: 256Mi
-    pods: "5"
----
 # --- kube-system (CoreDNS + Traefik + metrics-server + svclb) ---
 apiVersion: v1
 kind: ResourceQuota
