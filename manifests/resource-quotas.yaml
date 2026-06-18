@@ -33,9 +33,25 @@ spec:
   hard:
     requests.cpu: "2000m"
     requests.memory: 2Gi
-    limits.cpu: "4000m"
-    limits.memory: 5Gi
+    limits.cpu: "6000m"
+    limits.memory: 10Gi
     pods: "10"
+---
+# --- homepage (Homepage dashboard) ---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: homepage-quota
+  namespace: homepage
+  labels:
+    app: resource-quotas
+spec:
+  hard:
+    requests.cpu: "500m"
+    requests.memory: 512Mi
+    limits.cpu: "2000m"
+    limits.memory: 2Gi
+    pods: "5"
 ---
 # --- ollama (Ollama inference) ---
 apiVersion: v1
