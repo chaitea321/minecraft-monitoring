@@ -8,3 +8,6 @@ infra/main.json
 __pycache__/
 vault-init.json
 vault-keys.yaml
+
+# Local session notes / summaries (not for the repo)
+docs/notes/
