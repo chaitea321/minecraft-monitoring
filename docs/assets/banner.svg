@@ -1,0 +1,120 @@
+<svg width="1200" height="340" viewBox="0 0 1200 340" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Minecraft Monitoring Stack — observability, ChatOps and GitOps for a PaperMC server on Kubernetes">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#14171A"/>
+      <stop offset="1" stop-color="#20262B"/>
+    </linearGradient>
+    <linearGradient id="spark" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6DBB3C" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#6DBB3C" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#7ECB4A" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#7ECB4A" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M24 0H0V24" fill="none" stroke="#FFFFFF" stroke-opacity="0.03" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <!-- backdrop -->
+  <rect x="0" y="0" width="1200" height="340" rx="18" fill="url(#bg)"/>
+  <rect x="0" y="0" width="1200" height="340" rx="18" fill="url(#grid)"/>
+  <rect x="0.5" y="0.5" width="1199" height="339" rx="17.5" fill="none" stroke="#3A4249" stroke-opacity="0.6"/>
+  <!-- top accent bar -->
+  <rect x="0" y="0" width="1200" height="5" rx="2.5" fill="#6DBB3C"/>
+
+  <!-- ================= SIGNATURE: isometric grass block ================= -->
+  <g transform="translate(30,20)">
+    <!-- soft shadow -->
+    <ellipse cx="150" cy="252" rx="92" ry="18" fill="#000000" fill-opacity="0.28"/>
+
+    <!-- right dirt face -->
+    <path d="M150 182 L214 150 L214 206 L150 238 Z" fill="#6B4A2E"/>
+    <path d="M150 182 L214 150 L214 206 L150 238 Z" fill="#000000" fill-opacity="0.12"/>
+    <!-- left dirt face -->
+    <path d="M86 150 L150 182 L150 238 L86 206 Z" fill="#7D5636"/>
+    <!-- dirt pixel speckles -->
+    <path d="M104 176 l14 7 v12 l-14 -7 Z" fill="#8A6242" fill-opacity="0.7"/>
+    <path d="M170 200 l14 -7 v12 l-14 7 Z" fill="#5B3E27" fill-opacity="0.8"/>
+    <path d="M124 208 l12 6 v10 l-12 -6 Z" fill="#5B3E27" fill-opacity="0.7"/>
+
+    <!-- grass top face -->
+    <path d="M150 118 L214 150 L150 182 L86 150 Z" fill="#6DBB3C"/>
+    <!-- grass pixel tiles (2x2 diamonds) -->
+    <path d="M150 134 L182 150 L150 166 L118 150 Z" fill="#7ECB4A"/>
+    <path d="M118 150 L150 166 L150 182 L118 166 Z" fill="#5EA632" fill-opacity="0.9"/>
+    <path d="M182 150 L150 134 L150 118 L182 134 Z" fill="#5EA632" fill-opacity="0.65"/>
+    <path d="M118 150 L86 150 L118 134 L150 134 Z" fill="#83D251" fill-opacity="0.6"/>
+    <!-- grass edge highlight -->
+    <path d="M86 150 L150 118 L214 150" fill="none" stroke="#9BE06A" stroke-opacity="0.55" stroke-width="1.5"/>
+  </g>
+
+  <!-- ================= WORDMARK ================= -->
+  <g font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif">
+    <text x="300" y="132" font-size="52" font-weight="800" letter-spacing="1.5" fill="#EDE6D6">MINECRAFT</text>
+    <text x="302" y="180" font-size="34" font-weight="800" letter-spacing="6" fill="#6DBB3C">MONITORING STACK</text>
+    <text x="304" y="214" font-family="'SFMono-Regular','Consolas','Liberation Mono',monospace" font-size="15.5" letter-spacing="0.5" fill="#9AA6AD">Observability &#183; ChatOps &#183; GitOps for a PaperMC server on Kubernetes</text>
+
+    <!-- tech ribbon -->
+    <g font-family="'SFMono-Regular','Consolas','Liberation Mono',monospace" font-size="13" font-weight="600">
+      <g transform="translate(304,242)">
+        <rect x="0" y="0" width="52" height="24" rx="5" fill="#2C343A" stroke="#3A4249"/>
+        <text x="26" y="16" text-anchor="middle" fill="#C8CFD4">k3s</text>
+      </g>
+      <g transform="translate(364,242)">
+        <rect x="0" y="0" width="94" height="24" rx="5" fill="#2C343A" stroke="#3A4249"/>
+        <text x="47" y="16" text-anchor="middle" fill="#C8CFD4">Prometheus</text>
+      </g>
+      <g transform="translate(466,242)">
+        <rect x="0" y="0" width="66" height="24" rx="5" fill="#2C343A" stroke="#3A4249"/>
+        <text x="33" y="16" text-anchor="middle" fill="#C8CFD4">Grafana</text>
+      </g>
+      <g transform="translate(540,242)">
+        <rect x="0" y="0" width="48" height="24" rx="5" fill="#2C343A" stroke="#3A4249"/>
+        <text x="24" y="16" text-anchor="middle" fill="#C8CFD4">Loki</text>
+      </g>
+      <g transform="translate(596,242)">
+        <rect x="0" y="0" width="64" height="24" rx="5" fill="#2C343A" stroke="#3A4249"/>
+        <text x="32" y="16" text-anchor="middle" fill="#C8CFD4">Discord</text>
+      </g>
+      <g transform="translate(668,242)">
+        <rect x="0" y="0" width="62" height="24" rx="5" fill="#2C343A" stroke="#3A4249"/>
+        <text x="31" y="16" text-anchor="middle" fill="#C8CFD4">Ollama</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- ================= 20 TPS SPARKLINE ================= -->
+  <g transform="translate(772,54)">
+    <text x="0" y="12" font-family="'SFMono-Regular','Consolas','Liberation Mono',monospace" font-size="12" letter-spacing="1" fill="#6B747A">SERVER HEALTH</text>
+    <!-- target gridline -->
+    <line x1="0" y1="40" x2="360" y2="40" stroke="#3A4249" stroke-dasharray="3 4"/>
+    <text x="366" y="44" font-family="'SFMono-Regular','Consolas','Liberation Mono',monospace" font-size="13" font-weight="700" fill="#6DBB3C">20 TPS</text>
+
+    <!-- area under curve -->
+    <path d="M0 52 L40 48 L80 55 L120 46 L160 50 L200 44 L240 58 L280 47 L320 51 L360 45 L360 150 L0 150 Z" fill="url(#spark)"/>
+    <!-- the line -->
+    <path d="M0 52 L40 48 L80 55 L120 46 L160 50 L200 44 L240 58 L280 47 L320 51 L360 45"
+          fill="none" stroke="#7ECB4A" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    <!-- live endpoint -->
+    <circle cx="360" cy="45" r="14" fill="url(#glow)"/>
+    <circle cx="360" cy="45" r="4.5" fill="#9BE06A"/>
+
+    <!-- secondary metric labels -->
+    <g font-family="'SFMono-Regular','Consolas','Liberation Mono',monospace" font-size="12" fill="#6B747A">
+      <text x="0" y="176">heap</text>
+      <text x="120" y="176">gc</text>
+      <text x="210" y="176">players</text>
+      <text x="320" y="176">logs</text>
+    </g>
+    <g fill="#4EC1B8">
+      <rect x="34" y="166" width="70" height="4" rx="2" fill="#2C343A"/>
+      <rect x="34" y="166" width="44" height="4" rx="2"/>
+      <rect x="146" y="166" width="46" height="4" rx="2" fill="#2C343A"/>
+      <rect x="146" y="166" width="18" height="4" rx="2" fill="#E0A526"/>
+      <rect x="266" y="166" width="40" height="4" rx="2" fill="#2C343A"/>
+      <rect x="266" y="166" width="30" height="4" rx="2"/>
+    </g>
+  </g>
+</svg>
