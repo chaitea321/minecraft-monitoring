@@ -2,13 +2,26 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: homepage-ingress
-  namespace: default
+  namespace: homepage
   annotations:
     kubernetes.io/ingress.class: traefik
     traefik.ingress.kubernetes.io/router.entrypoints: web
+    # Strip root prefix for Homepage
+    traefik.ingress.kubernetes.io/router.middlewares: homepage-strip-prefix.homepage@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
+    - host: ip-192-168-1-192.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: homepage-service
+                port:
+                  number: 3000
+    # Alternative direct IP access (no host required)
     - http:
         paths:
           - path: /

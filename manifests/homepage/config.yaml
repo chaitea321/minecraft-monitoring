@@ -1,0 +1,59 @@
+# Homepage configuration for chai-homelab
+# Place this in /etc/homepage/config.yaml or mount as ConfigMap
+
+services:
+  # Minecraft Services
+  - name: Minecraft Server
+    description: PaperMC 1.21.4 Server
+    logo: minecraft.png
+    url: https://chai-homelab.com
+    widget:
+      type: minecraft
+      host: minecraft.default
+      port: 25575
+
+  # Monitoring Stack
+  - name: Prometheus
+    description: Metrics & Alerting
+    logo: prometheus.png
+    url: https://chai-homelab.com/prometheus
+    widget:
+      type: prometheus
+      url: http://kube-prometheus-stack-prometheus.monitoring:9090/prometheus
+
+  - name: Grafana
+    description: Dashboards & Visualization
+    logo: grafana.png
+    url: https://chai-homelab.com/grafana
+    widget:
+      type: grafana
+      url: http://kube-prometheus-stack-grafana.monitoring:80
+
+  - name: Loki
+    description: Log Aggregation
+    logo: loki.png
+    url: https://chai-homelab.com/loki
+    widget:
+      type: loki
+      url: http://loki-gateway.monitoring:80
+
+  # GitOps
+  - name: ArgoCD
+    description: GitOps Platform
+    logo: argocd.png
+    url: https://chai-homelab.com/argocd
+
+  # AI
+  - name: Ollama
+    description: Local LLM Inference
+    logo: ollama.png
+    url: http://ollama.ollama:11434
+    widget:
+      type: ollama
+      url: http://ollama.ollama:11434
+
+# Server status widgets
+servers:
+  - name: Home Lab
+    host: 192.168.1.192
+    icon: server

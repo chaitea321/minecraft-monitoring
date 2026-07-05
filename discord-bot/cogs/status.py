@@ -12,7 +12,7 @@ class Status(commands.Cog):
         await interaction.response.defer()
         try:
             tps_data = await self.bot.prometheus.instant(
-                "minecraft_tps_bucket_sum / minecraft_tps_bucket_count"
+                "paper_tps_1m"
             )
             players_data = await self.bot.prometheus.instant(
                 "increase(minecraft_play_time_ticks_total[5m]) > 0"
@@ -87,7 +87,7 @@ class Status(commands.Cog):
         await interaction.response.defer()
         try:
             data = await self.bot.prometheus.instant(
-                "minecraft_tps_bucket_sum / minecraft_tps_bucket_count"
+                "paper_tps_1m"
             )
             tps = float(data[0]["value"][1]) if data else 0
             await interaction.followup.send(f"**Current TPS:** {tps:.1f}")
@@ -109,6 +109,65 @@ class Status(commands.Cog):
             )
         except Exception as e:
             await interaction.followup.send(f"Error querying uptime: {e}")
+
+    @app_commands.command(name="session", description="Check player session duration")
+    @app_commands.describe(player="Minecraft username")
+    async def session(self, interaction: discord.Interaction, player: str):
+        await interaction.response.defer()
+        try:
+            # Get total play time for this player
+            data = await self.bot.prometheus.instant(
+                f'minecraft_play_time_ticks_total{{player="{player}"}}'
+            )
+            if not data:
+                await interaction.followup.send(f"Player **{player}** not found in metrics")
+                return
+
+            # Calculate session duration
+            ticks = float(data[0]["value"][1])
+            hours = int(ticks / 20 / 3600)
+            minutes = int((ticks / 20 / 60) % 60)
+
+            embed = discord.Embed(
+                title=f"📊 Session: {player}",
+                color=0x722F37
+            )
+            embed.add_field(name="Total Play Time", value=f"{hours}h {minutes}m", inline=True)
+            await interaction.followup.send(embed=embed)
+        except Exception as e:
+            await interaction.followup.send(f"Error querying session: {e}")
+
+    @app_commands.command(name="top-players", description="Show top 10 players by play time")
+    async def top_players(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        try:
+            data = await self.bot.prometheus.instant(
+                'minecraft_play_time_ticks_total'
+            )
+
+            if not data:
+                await interaction.followup.send("No player data found")
+                return
+
+            # Sort by play time
+            sorted_data = sorted(data, key=lambda x: float(x["value"][1]), reverse=True)[:10]
+
+            lines = []
+            for i, r in enumerate(sorted_data, 1):
+                player = r["metric"].get("player", "unknown")
+                ticks = float(r["value"][1])
+                hours = int(ticks / 20 / 3600)
+                minutes = int((ticks / 20 / 60) % 60)
+                lines.append(f"**{i}. {player}**: {hours}h {minutes}m")
+
+            embed = discord.Embed(
+                title=f"🏆 Top 10 Players by Play Time",
+                description="\n".join(lines),
+                color=0x722F37
+            )
+            await interaction.followup.send(embed=embed)
+        except Exception as e:
+            await interaction.followup.send(f"Error fetching top players: {e}")
 
 
 async def setup(bot):

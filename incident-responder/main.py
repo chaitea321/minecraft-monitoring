@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import os
+import sys
 import time
 
 import aiohttp
@@ -13,7 +14,9 @@ logging.basicConfig(
 )
 log = logging.getLogger("incident-responder")
 
-DISCORD_WEBHOOK_URL = os.environ["DISCORD_WEBHOOK_URL"]
+DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
+if not DISCORD_WEBHOOK_URL:
+    sys.exit("FATAL: DISCORD_WEBHOOK_URL environment variable is required")
 PROMETHEUS_URL = os.environ.get(
     "PROMETHEUS_URL",
     "http://kube-prometheus-stack-prometheus.monitoring:9090/prometheus",
@@ -28,15 +31,30 @@ OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "phi3")
 # Track alert fingerprints to avoid duplicate diagnostics
 RECENT_ALERTS = {}
 DEDUP_WINDOW = 300  # seconds
+_last_prune = 0.0  # last time RECENT_ALERTS was pruned
+_alert_lock = asyncio.Lock()
 
 
-def is_duplicate(fingerprint: str) -> bool:
+async def is_duplicate(fingerprint: str) -> bool:
+    global _last_prune
     now = time.time()
-    if fingerprint in RECENT_ALERTS:
-        if now - RECENT_ALERTS[fingerprint] < DEDUP_WINDOW:
-            return True
-    RECENT_ALERTS[fingerprint] = now
-    return False
+
+    async with _alert_lock:
+        # Periodic pruning: clean up entries older than DEDUP_WINDOW
+        if now - _last_prune >= DEDUP_WINDOW:
+            stale_keys = [
+                k for k, ts in RECENT_ALERTS.items()
+                if now - ts >= DEDUP_WINDOW
+            ]
+            for k in stale_keys:
+                del RECENT_ALERTS[k]
+            _last_prune = now
+
+        if fingerprint in RECENT_ALERTS:
+            if now - RECENT_ALERTS[fingerprint] < DEDUP_WINDOW:
+                return True
+        RECENT_ALERTS[fingerprint] = now
+        return False
 
 
 def severity_color(severity: str) -> int:
@@ -127,22 +145,14 @@ async def query_ollama(
 
 
 async def gather_diagnostics() -> dict:
-    tps_data = await query_prometheus(
-        "minecraft_tps_bucket_sum / minecraft_tps_bucket_count"
+    tps_data, heap_data, load_data, players_data, uptime_data, logs = await asyncio.gather(
+        query_prometheus("paper_tps_1m"),
+        query_prometheus("java_lang_Memory_HeapMemoryUsage_used / java_lang_Memory_HeapMemoryUsage_max"),
+        query_prometheus("java_lang_OperatingSystem_SystemLoadAverage"),
+        query_prometheus("increase(minecraft_play_time_ticks_total[5m]) > 0"),
+        query_prometheus('time() - process_start_time_seconds{job="minecraft-metrics"}'),
+        query_loki('{app="minecraft"}', 5),
     )
-    heap_data = await query_prometheus(
-        "java_lang_Memory_HeapMemoryUsage_used / java_lang_Memory_HeapMemoryUsage_max"
-    )
-    load_data = await query_prometheus(
-        "java_lang_OperatingSystem_SystemLoadAverage"
-    )
-    players_data = await query_prometheus(
-        "increase(minecraft_play_time_ticks_total[5m]) > 0"
-    )
-    uptime_data = await query_prometheus(
-        'time() - process_start_time_seconds{job="minecraft-metrics"}'
-    )
-    logs = await query_loki('{app="minecraft"}', 5)
 
     tps = float(tps_data[0]["value"][1]) if tps_data else None
     heap = float(heap_data[0]["value"][1]) if heap_data else None
@@ -258,52 +268,66 @@ async def handle_webhook(request: web.Request) -> web.Response:
 
     async def process_alerts():
         for alert in alerts:
-            fingerprint = alert.get("fingerprint", "")
-            if is_duplicate(fingerprint):
-                log.info("Skipping duplicate alert: %s", fingerprint)
-                continue
-
-            status = alert.get("status", "firing")
-            labels = alert.get("labels", {})
-            name = labels.get("alertname", "Unknown")
-            log.info("Processing alert: %s (%s)", name, status)
-
-            # 1. Forward alert embed to Discord
-            alert_embed = build_alert_embed(alert)
-            await post_discord(alert_embed)
-
-            # 2. Gather diagnostics
-            diag = await gather_diagnostics()
-
-            # 3. Post diagnostic embed
-            diag_embed = build_diagnostic_embed(alert, diag)
-            await post_discord(diag_embed)
-
-            # 4. AI analysis via Ollama (best-effort, never blocks)
             try:
-                system_msg = (
-                    "You are a Minecraft server admin assistant. "
-                    "Use ONLY the data provided. Do not repeat or restate the prompt. "
-                    "Do not fabricate or assume any numbers."
-                )
-                user_msg = (
-                    f"Alert: {name} ({labels.get('severity', '?')})\n"
-                    f"TPS: {diag['tps']}, Heap: {diag['heap_pct']}%, "
-                    f"Load: {diag['load']}, Players: {diag['players']}\n"
-                    f"Recent logs:\n{diag['logs_sample'][:800]}\n\n"
-                    "What is likely causing this issue and what should "
-                    "the admin do? Be concise (3-5 sentences)."
-                )
-                analysis = await query_ollama(user_msg, system=system_msg)
-                if analysis:
-                    ai_embed = build_ai_embed(alert, analysis)
-                    await post_discord(ai_embed)
+                fingerprint = alert.get("fingerprint")
+                if not fingerprint:
+                    labels = alert.get("labels", {})
+                    label_str = "_".join(f"{k}={v}" for k, v in sorted(labels.items()))
+                    fingerprint = f"{alert.get('status', 'unknown')}_{label_str}"
+                if await is_duplicate(fingerprint):
+                    log.info("Skipping duplicate alert: %s", fingerprint)
+                    continue
+
+                status = alert.get("status", "firing")
+                labels = alert.get("labels", {})
+                name = labels.get("alertname", "Unknown")
+                log.info("Processing alert: %s (%s)", name, status)
+
+                # 1. Forward alert embed to Discord
+                alert_embed = build_alert_embed(alert)
+                await post_discord(alert_embed)
+
+                # 2. Gather diagnostics
+                diag = await gather_diagnostics()
+
+                # 3. Post diagnostic embed
+                diag_embed = build_diagnostic_embed(alert, diag)
+                await post_discord(diag_embed)
+
+                # 4. AI analysis via Ollama (best-effort, never blocks)
+                try:
+                    system_msg = (
+                        "You are a Minecraft server admin assistant. "
+                        "Use ONLY the data provided. Do not repeat or restate the prompt. "
+                        "Do not fabricate or assume any numbers."
+                    )
+                    user_msg = (
+                        f"Alert: {name} ({labels.get('severity', '?')})\n"
+                        f"TPS: {diag['tps']}, Heap: {diag['heap_pct']}%, "
+                        f"Load: {diag['load']}, Players: {diag['players']}\n"
+                        f"Recent logs:\n{diag['logs_sample'][:800]}\n\n"
+                        "What is likely causing this issue and what should "
+                        "the admin do? Be concise (3-5 sentences)."
+                    )
+                    analysis = await query_ollama(user_msg, system=system_msg)
+                    if analysis:
+                        ai_embed = build_ai_embed(alert, analysis)
+                        await post_discord(ai_embed)
+                except Exception as e:
+                    log.warning("AI analysis failed (non-critical): %s", e)
+
+                log.info("Completed diagnostics for: %s", name)
             except Exception as e:
-                log.warning("AI analysis failed (non-critical): %s", e)
+                log.error("Failed to process alert %s: %s",
+                          alert.get("fingerprint", "unknown"), e)
 
-            log.info("Completed diagnostics for: %s", name)
+    async def _run_alerts():
+        try:
+            await process_alerts()
+        except Exception as e:
+            log.error("Unhandled error in process_alerts: %s", e)
 
-    asyncio.ensure_future(process_alerts())
+    asyncio.create_task(_run_alerts())
     return web.Response(status=200, text="ok")
 
 

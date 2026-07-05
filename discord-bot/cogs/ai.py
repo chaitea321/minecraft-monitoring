@@ -1,15 +1,8 @@
-import os
-
 import aiohttp
 import discord
 from discord import app_commands
 from discord.ext import commands
-
-OLLAMA_URL = os.environ.get(
-    "OLLAMA_URL", "http://ollama.ollama:11434"
-)
-OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "phi3")
-LOKI_URL = os.environ.get("LOKI_URL", "http://loki-gateway.monitoring:80")
+from config import LOKI_URL, OLLAMA_URL, OLLAMA_MODEL
 
 
 async def query_ollama(
@@ -76,7 +69,7 @@ class AI(commands.Cog):
         await interaction.response.defer()
         try:
             tps_data = await self.bot.prometheus.instant(
-                "minecraft_tps_bucket_sum / minecraft_tps_bucket_count"
+                "paper_tps_1m"
             )
             heap_data = await self.bot.prometheus.instant(
                 "java_lang_Memory_HeapMemoryUsage_used / java_lang_Memory_HeapMemoryUsage_max"

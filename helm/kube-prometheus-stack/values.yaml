@@ -31,6 +31,7 @@ kube-prometheus-stack:
   prometheus:
     prometheusSpec:
       routePrefix: /prometheus
+      # External URL must match the ingress path for proper redirects
       externalUrl: http://192.168.1.192/prometheus
       resources:
         requests:
@@ -124,26 +125,17 @@ kube-prometheus-stack:
       dashboards:
         enabled: true
         label: grafana_dashboard
+        searchNamespace: ALL
+        provider:
+          foldersFromFilesStructure: true
       datasources:
         enabled: true
         label: grafana_datasource
-        additionalDataSources:
-          - name: Prometheus
-            type: prometheus
-            uid: prometheus
-            url: http://monitoring-kube-prometheus-prometheus.monitoring:9090/prometheus/
-            access: proxy
-            isDefault: true
-            jsonData:
-              httpMethod: POST
-              timeInterval: 30s
-    sidecarResources:
-      requests:
-        cpu: 25m
-        memory: 32Mi
-      limits:
-        cpu: 50m
-        memory: 64Mi
+        searchNamespace: ALL
+        # The Prometheus datasource (uid: prometheus) is provisioned by the
+        # loki-datasource ConfigMap. Disable the auto-created default to avoid
+        # a duplicate-uid provisioning collision.
+        defaultDatasourceEnabled: false
     admin:
       existingSecret: grafana-admin-credentials
       userKey: admin-user
@@ -157,6 +149,8 @@ kube-prometheus-stack:
         domain: "192.168.1.192"
         root_url: "http://192.168.1.192/grafana/"
         serve_from_sub_path: true
+        # Ensure asset loading works with sub-path routing
+        static_root_path: /var/lib/grafana/public
       auth:
         login_maximum_inactive_lifetime_duration: "7d"
         login_maximum_lifetime_duration: "30d"
@@ -187,6 +181,19 @@ kube-prometheus-stack:
         - sourceLabels: [__name__]
           regex: (rest_client_request_duration_seconds_bucket|rest_client_request_duration_seconds_sum)
           action: drop
+
+  # Homepage metrics scraping
+  additionalScrapeConfigs:
+    - job_name: 'homepage'
+      metrics_path: '/metrics'
+      static_configs:
+        - targets:
+            - 'homepage-metrics.homepage:3000'
+          labels:
+            service: 'homepage'
+      scrape_interval: 30s
+      scrape_timeout: 10s
+      scheme: http
 
   prometheus-node-exporter:
     resources:

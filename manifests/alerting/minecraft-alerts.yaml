@@ -20,7 +20,8 @@ spec:
             summary: "Minecraft server is down"
             description: "The Minecraft metrics exporter has been unreachable for 1 minute."
         - alert: LowTPS
-          expr: minecraft_tps_bucket_sum / minecraft_tps_bucket_count < 15
+          # paper_tps_1m is a gauge exposed by the Paper Prometheus exporter (0-20)
+          expr: paper_tps_1m < 15
           for: 5m
           labels:
             severity: warning
@@ -29,7 +30,7 @@ spec:
             summary: "Low TPS detected"
             description: "Server TPS has been below 15 for 5 minutes (current: {{ $value }})."
         - alert: CriticalTPS
-          expr: minecraft_tps_bucket_sum / minecraft_tps_bucket_count < 10
+          expr: paper_tps_1m < 10
           for: 3m
           labels:
             severity: critical
@@ -65,11 +66,50 @@ spec:
             summary: "High system load average"
             description: "System load average has been above 6 for 5 minutes (current: {{ $value }})."
         - alert: NoPlayersOnline
-          expr: count(increase(minecraft_play_time_ticks_total[30m]) > 0) == 0
-          for: 30m
+          # Check for players with activity in last 5 minutes
+          expr: count(increase(minecraft_play_time_ticks_total[5m]) > 0) == 0
+          for: 15m
           labels:
             severity: info
             namespace: monitoring
           annotations:
             summary: "No players online"
-            description: "No players have been online for 30 minutes."
+            description: "No players have been online for 15 minutes."
+
+        # Predictive: Memory leak warning
+        - alert: MemoryGrowthWarning
+          expr: |
+            predict_linear(java_lang_Memory_HeapMemoryUsage_used[1h], 3600) >
+            java_lang_Memory_HeapMemoryUsage_max * 0.95
+          for: 5m
+          labels:
+            severity: warning
+            namespace: monitoring
+          annotations:
+            summary: "Predicted memory leak in Minecraft server"
+            description: "Heap usage predicted to exceed 95% in 1 hour (predicted used: {{ $value | humanize }}B)"
+
+        # Predictive: Disk space warning
+        - alert: DiskSpaceWarning
+          expr: |
+            predict_linear(node_filesystem_avail_bytes{mountpoint="/var/lib/kubelet", job="kubelet"}[2h], 86400) <
+            node_filesystem_size_bytes{mountpoint="/var/lib/kubelet", job="kubelet"} * 0.1
+          for: 5m
+          labels:
+            severity: warning
+            namespace: monitoring
+          annotations:
+            summary: "Predicted disk space exhaustion"
+            description: "Disk predicted to be 90% full in 24 hours (predicted free: {{ $value | humanize }}B)"
+
+        # Predictive: TPS decline
+        - alert: TPSDeclining
+          expr: |
+            predict_linear(paper_tps_1m[30m], 1800) < 15
+          for: 10m
+          labels:
+            severity: warning
+            namespace: monitoring
+          annotations:
+            summary: "TPS predicted to decline"
+            description: "TPS predicted to drop below 15 in 30 minutes (current: {{ $value }})"

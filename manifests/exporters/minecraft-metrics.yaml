@@ -12,9 +12,6 @@ spec:
     - name: jmx-metrics
       port: 5556
       targetPort: 5556
-    - name: rcon-metrics
-      port: 8080
-      targetPort: 8080
   selector:
     app: minecraft
 ---
@@ -25,8 +22,9 @@ metadata:
   name: minecraft
   namespace: monitoring
   labels:
-    release: monitoring
+    release: kube-prometheus-stack
 spec:
+  jobLabel: minecraft-metrics
   namespaceSelector:
     matchNames:
       - default
@@ -35,8 +33,5 @@ spec:
       app: minecraft
   endpoints:
     - port: jmx-metrics
-      interval: 30s
-      path: /metrics
-    - port: rcon-metrics
       interval: 30s
       path: /metrics

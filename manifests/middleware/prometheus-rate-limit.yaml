@@ -1,0 +1,33 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: prometheus-rate-limit
+  namespace: monitoring
+spec:
+  rateLimit:
+    average: 100
+    burst: 50
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: prometheus-ingress
+  namespace: monitoring
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    # Apply both rate limiting and strip-prefix
+    traefik.ingress.kubernetes.io/router.middlewares: prometheus-rate-limit.monitoring@kubernetescrd,prometheus-strip-prefix.monitoring@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: chai-homelab.com
+      http:
+        paths:
+          - path: /prometheus
+            pathType: Prefix
+            backend:
+              service:
+                name: kube-prometheus-stack-prometheus
+                port:
+                  number: 9090

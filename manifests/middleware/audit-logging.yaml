@@ -1,0 +1,48 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: audit-logging
+  namespace: monitoring
+spec:
+  headers:
+    customRequestHeaders:
+      X-Audit-ID: "{{ .RandomString 16 }}"
+      X-Client-IP: "{{ .RemoteAddr }}"
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: audit-logging
+  namespace: monitoring
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    # Apply audit logging to all monitored services
+    traefik.ingress.kubernetes.io/router.middlewares: audit-logging.monitoring@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: chai-homelab.com
+      http:
+        paths:
+          - path: /prometheus
+            pathType: Prefix
+            backend:
+              service:
+                name: kube-prometheus-stack-prometheus
+                port:
+                  number: 9090
+          - path: /grafana
+            pathType: Prefix
+            backend:
+              service:
+                name: kube-prometheus-stack-grafana
+                port:
+                  number: 80
+          - path: /loki
+            pathType: Prefix
+            backend:
+              service:
+                name: loki-gateway
+                port:
+                  number: 80

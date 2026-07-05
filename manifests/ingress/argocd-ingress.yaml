@@ -9,7 +9,8 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - http:
+    - host: chai-homelab.com
+      http:
         paths:
           - path: /argocd
             pathType: Prefix

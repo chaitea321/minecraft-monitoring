@@ -2,9 +2,8 @@ param location string
 param clusterName string
 param adminUsername string
 param sshPublicKey string
-param systemSubnetId string
-param userSubnetId string
 param acrName string
+param nodeVmSize string
 
 resource aks 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
   name: clusterName
@@ -13,7 +12,6 @@ resource aks 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
     type: 'SystemAssigned'
   }
   properties: {
-    kubernetesVersion: ''
     dnsPrefix: uniqueString(resourceGroup().id)
     linuxProfile: sshPublicKey != '' ? {
       adminUsername: adminUsername
@@ -30,32 +28,16 @@ resource aks 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
         name: 'systempool'
         mode: 'System'
         type: 'VirtualMachineScaleSets'
-        vmSize: 'Standard_DS2_v2'
-        osDiskSizeGB: 128
+        vmSize: nodeVmSize
+        osDiskSizeGB: 64
         count: 1
-        minCount: 1
-        maxCount: 3
-        enableAutoScaling: true
-        vnetSubnetID: systemSubnetId
-      }
-      {
-        name: 'userpool'
-        mode: 'User'
-        type: 'VirtualMachineScaleSets'
-        vmSize: 'Standard_DS2_v2'
-        osDiskSizeGB: 128
-        count: 0
-        minCount: 0
-        maxCount: 3
-        enableAutoScaling: true
-        vnetSubnetID: userSubnetId
       }
     ]
     networkProfile: {
-      networkPlugin: 'azure'
-      networkPolicy: 'calico'
+      networkPlugin: 'kubenet'
       serviceCidr: '10.96.0.0/12'
       dnsServiceIP: '10.96.0.10'
+      podCidr: '10.244.0.0/16'
     }
     apiServerAccessProfile: {
       enablePrivateCluster: false
@@ -63,6 +45,11 @@ resource aks 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
     aadProfile: {
       managed: true
       enableAzureRBAC: true
+    }
+    upgradeSettings: {
+      overrideSettings: {
+        forceUpgrade: false
+      }
     }
   }
 }

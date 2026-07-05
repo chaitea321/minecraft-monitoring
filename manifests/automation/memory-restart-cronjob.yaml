@@ -1,0 +1,161 @@
+---
+# ServiceAccount used by the memory-restart CronJob to restart the Minecraft
+# pod via the Kubernetes API (delete-by-label triggers a graceful recreate).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: minecraft-memory-restart
+  namespace: default
+  labels:
+    app: minecraft-automation
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: minecraft-memory-restart
+  namespace: default
+  labels:
+    app: minecraft-automation
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: minecraft-memory-restart
+  namespace: default
+  labels:
+    app: minecraft-automation
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: minecraft-memory-restart
+subjects:
+  - kind: ServiceAccount
+    name: minecraft-memory-restart
+    namespace: default
+---
+# Sync the Discord webhook URL from Azure Key Vault into the default namespace
+# so the CronJob can post notifications.
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: minecraft-automation-webhook
+  namespace: default
+  labels:
+    app: minecraft-automation
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: azure-kv-store
+  target:
+    name: minecraft-automation-webhook
+    creationPolicy: Owner
+    deletionPolicy: Delete
+  data:
+    - secretKey: webhook-url
+      remoteRef:
+        key: discord-webhook
+---
+# Auto-restart Minecraft server when JVM heap approaches critical levels.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: minecraft-memory-restart
+  namespace: default
+  labels:
+    app: minecraft-automation
+spec:
+  schedule: "0 */4 * * *"  # Every 4 hours
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: minecraft-automation
+        spec:
+          restartPolicy: OnFailure
+          serviceAccountName: minecraft-memory-restart
+          containers:
+            - name: memory-checker
+              image: alpine:3.20
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -eu
+                  apk add --no-cache curl jq >/dev/null
+
+                  PROM="http://kube-prometheus-stack-prometheus.monitoring:9090/prometheus"
+                  QUERY='java_lang_Memory_HeapMemoryUsage_used/java_lang_Memory_HeapMemoryUsage_max'
+
+                  MEMORY_USAGE=$(curl -sf --data-urlencode "query=${QUERY}" \
+                    "${PROM}/api/v1/query" | jq -r '.data.result[0].value[1] // empty')
+
+                  if [ -z "$MEMORY_USAGE" ]; then
+                    echo "No heap metric returned; skipping."
+                    exit 0
+                  fi
+
+                  echo "Current heap usage ratio: ${MEMORY_USAGE}"
+                  if ! awk "BEGIN{exit !(${MEMORY_USAGE} > 0.90)}"; then
+                    echo "Heap usage below 90%, no restart needed."
+                    exit 0
+                  fi
+
+                  PCT=$(awk "BEGIN{printf \"%.1f\", ${MEMORY_USAGE} * 100}")
+                  echo "Heap usage at ${PCT}%, triggering restart..."
+
+                  # Restart the Minecraft server by deleting its pod(s); the
+                  # owning controller recreates them. SIGTERM lets the server
+                  # shut down gracefully.
+                  APISERVER="https://kubernetes.default.svc"
+                  TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+                  CACERT=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                  if curl -sf --cacert "$CACERT" \
+                       -H "Authorization: Bearer $TOKEN" \
+                       -X DELETE \
+                       "${APISERVER}/api/v1/namespaces/default/pods?labelSelector=app%3Dminecraft"; then
+                    echo "Restart request sent."
+                  else
+                    echo "Restart request failed."
+                  fi
+
+                  # Notify Discord (webhook URL is the full URL from Key Vault).
+                  if [ -n "${WEBHOOK_URL:-}" ]; then
+                    TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+                    PAYLOAD=$(jq -n --arg pct "${PCT}%" --arg time "$TIME" '{
+                      embeds: [{
+                        title: "🔄 Auto-Restart Triggered",
+                        description: "JVM heap usage exceeded 90%",
+                        color: 15974977,
+                        fields: [
+                          {name: "Heap", value: $pct, inline: true},
+                          {name: "Time", value: $time, inline: true}
+                        ]
+                      }]
+                    }')
+                    curl -sf -X POST "$WEBHOOK_URL" \
+                      -H "Content-Type: application/json" \
+                      -d "$PAYLOAD" >/dev/null \
+                      && echo "Discord notified." || echo "Discord notification failed."
+                  fi
+              env:
+                - name: WEBHOOK_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: minecraft-automation-webhook
+                      key: webhook-url
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  cpu: 100m
+                  memory: 128Mi

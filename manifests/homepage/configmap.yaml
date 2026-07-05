@@ -1,0 +1,101 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homepage-config
+  namespace: homepage
+  labels:
+    app: homepage
+data:
+  config.yaml: |
+    # Homepage configuration for chai-homelab
+    services:
+      # Minecraft Services
+      - name: Minecraft Server
+        description: PaperMC 1.21.4 Server
+        logo: minecraft.png
+        url: http://localhost:3000
+        widget:
+          type: minecraft
+          host: minecraft.default
+          port: 25575
+
+      # Monitoring Stack
+      - name: Prometheus
+        description: Metrics & Alerting
+        logo: prometheus.png
+        url: http://localhost/prometheus
+        widget:
+          type: prometheus
+          url: http://kube-prometheus-stack-prometheus.monitoring:9090/prometheus
+
+      - name: Grafana
+        description: Dashboards & Visualization
+        logo: grafana.png
+        url: http://localhost/grafana
+        widget:
+          type: grafana
+          url: http://kube-prometheus-stack-grafana.monitoring:80
+
+      - name: Loki
+        description: Log Aggregation
+        logo: loki.png
+        url: http://localhost/loki
+        widget:
+          type: loki
+          url: http://loki-gateway.monitoring:80
+
+      # GitOps
+      - name: ArgoCD
+        description: GitOps Platform
+        logo: argocd.png
+        url: http://localhost/argocd
+
+      # AI
+      - name: Ollama
+        description: Local LLM Inference
+        logo: ollama.png
+        url: http://ollama.ollama:11434
+        widget:
+          type: ollama
+          url: http://ollama.ollama:11434
+
+      # System Resources (NEW - Added for holistic homelab monitoring)
+      - name: System Resources
+        description: k3s Server CPU, RAM, Disk Usage
+        logo: server.png
+        url: http://localhost/prometheus
+        widget:
+          type: prometheus
+          url: http://kube-prometheus-stack-prometheus.monitoring:9090/prometheus
+          metrics:
+            - name: "CPU Usage"
+              query: "100 - (avg(irate(node_cpu_seconds_total{mode='idle'}[5m])) by (instance) * 100)"
+              format: "percent"
+              color: green
+              threshold:
+                warning: 70
+                critical: 90
+            - name: "Memory Usage"
+              query: "(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100"
+              format: "percent"
+              color: orange
+              threshold:
+                warning: 75
+                critical: 90
+            - name: "Disk Usage"
+              query: "(node_filesystem_size_bytes{fstype='ext4'} - node_filesystem_avail_bytes{fstype='ext4'}) / node_filesystem_size_bytes{fstype='ext4'} * 100"
+              format: "percent"
+              color: red
+              threshold:
+                warning: 80
+                critical: 95
+            - name: "System Load (1m)"
+              query: "node_load1"
+              format: "number"
+              color: blue
+
+    # Server status widgets
+    servers:
+      - name: Home Lab
+        host: 192.168.1.192
+        icon: server
