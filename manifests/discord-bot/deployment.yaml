@@ -23,7 +23,7 @@ spec:
       serviceAccountName: discord-bot
       containers:
         - name: bot
-          image: evince55/discord-bot:latest
+          image: evince55/discord-bot:1780079463  # PINNED 2026-07-07: :latest (sha 84b582) is broken — ai.py imports OLLAMA_URL but its config.py never defines it (ImportError crashloop). 1780079463 is the last-known-good build. Rebuild :latest from repo HEAD (source is correct) then repin.
           env:
             - name: PYTHONUNBUFFERED
               value: "1"
