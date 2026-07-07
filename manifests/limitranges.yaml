@@ -1,0 +1,28 @@
+# Default container resources for kube-system.
+#
+# Why: kube-system-quota rejects any pod lacking requests+limits. The
+# local-path-provisioner creates transient "helper-pod-create-pvc-*" pods
+# here with no resources, so every dynamic PVC provision has failed since the
+# quota landed (uptime-kuma PVC Pending ~20d; homepage-pvc Pending). This
+# LimitRange injects defaults at admission so those helper pods are accepted.
+#
+# Blast radius verified minimal: coredns, traefik, metrics-server and
+# local-path-provisioner already set their own limits, so these defaults do
+# not apply to them. Only the ephemeral helper pods and 0Mi klipper-lb pods
+# inherit them. Quota headroom at apply time: ~1110Mi limits / ~564Mi requests.
+# The local-path config is k3s-bundled (edits revert on restart), so a
+# LimitRange is the durable fix rather than editing the helper-pod template.
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: kube-system-defaults
+  namespace: kube-system
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 10m
+        memory: 32Mi
+      default:
+        cpu: 300m
+        memory: 192Mi
