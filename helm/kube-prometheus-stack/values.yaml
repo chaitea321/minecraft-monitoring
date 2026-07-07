@@ -149,8 +149,6 @@ kube-prometheus-stack:
         domain: "192.168.1.192"
         root_url: "http://192.168.1.192/grafana/"
         serve_from_sub_path: true
-        # Ensure asset loading works with sub-path routing
-        static_root_path: /var/lib/grafana/public
       auth:
         login_maximum_inactive_lifetime_duration: "7d"
         login_maximum_lifetime_duration: "30d"
