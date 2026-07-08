@@ -1,3 +1,3 @@
 # Allow eugene to run PVC backup scripts without a password
-eugene ALL=(ALL) NOPASSWD: /home/eugene/monitoring/backup-pvcs.sh
-eugene ALL=(ALL) NOPASSWD: /home/eugene/monitoring/restore-pvc.sh
+eugene ALL=(ALL) NOPASSWD: /home/eugene/monitoring/scripts/backup-pvcs.sh
+eugene ALL=(ALL) NOPASSWD: /home/eugene/monitoring/scripts/restore-pvc.sh

@@ -13,8 +13,43 @@ data:
       - name: Loki
         type: loki
         uid: loki
-        url: http://loki-gateway.monitoring:80
+        url: http://loki-gateway.monitoring:80/
         access: proxy
         isDefault: false
+        editable: true
         jsonData:
           maxLines: 1000
+          derivedFields:
+            - datasourceUid: prometheus
+              matcherRegex: '(\w+:\/\/[0-9.]+:\d+)'
+              name: Link to Prometheus
+              url: '$${__value.raw}'
+          exploreToExploreLink: true
+
+      # Prometheus datasource (for metrics)
+      - name: Prometheus
+        type: prometheus
+        uid: prometheus
+        url: http://kube-prometheus-stack-prometheus.monitoring:9090/prometheus/
+        access: proxy
+        isDefault: true
+        editable: true
+        jsonData:
+          timeInterval: 30s
+
+      # Additional Loki datasource for Minecraft logs
+      - name: Loki-Minecraft
+        type: loki
+        uid: loki-minecraft
+        url: http://loki-gateway.monitoring:80/
+        access: proxy
+        isDefault: false
+        editable: true
+        jsonData:
+          maxLines: 1000
+          derivedFields:
+            - datasourceUid: prometheus
+              matcherRegex: '(\w+:\/\/[0-9.]+:\d+)'
+              name: Link to Prometheus
+              url: '$${__value.raw}'
+          exploreToExploreLink: true

@@ -21,7 +21,6 @@ jobs:
         with:
           file_or_dir: .
           config_file: .yamllint.yaml
-        continue-on-error: true
 
   helm-lint:
     name: Helm Lint
@@ -68,10 +67,13 @@ jobs:
         run: |
           for chart in helm/kube-prometheus-stack loki loki/promtail-wrapper; do
             echo "=== $chart ==="
-            if helm template test-release "$chart" 2>/dev/null | kubeconform -summary -ignore-missing-schemas -stdin; then
+            if rendered=$(helm template test-release "$chart" 2>&1); then
+              echo "$rendered" | kubeconform -summary -ignore-missing-schemas -stdin
               echo "  OK"
             else
-              echo "  FAILED to validate (may be expected for CRDs)"
+              echo "  FAILED to template:"
+              echo "$rendered"
+              exit 1
             fi
           done
 
