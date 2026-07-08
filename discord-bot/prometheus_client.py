@@ -10,6 +10,7 @@ class PrometheusClient:
             async with session.get(
                 f"{self.base_url}/api/v1/query",
                 params={"query": query},
+                timeout=aiohttp.ClientTimeout(total=10),
             ) as resp:
                 data = await resp.json()
                 if data["status"] != "success":

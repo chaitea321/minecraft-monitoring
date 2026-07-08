@@ -48,8 +48,8 @@ spec:
             periodSeconds: 15
           readinessProbe:
             httpGet:
-              path: /metrics
-              port: 8000
+              path: /health
+              port: 8001
             initialDelaySeconds: 5
             periodSeconds: 5
 ---

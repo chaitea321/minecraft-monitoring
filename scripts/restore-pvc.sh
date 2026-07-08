@@ -27,12 +27,20 @@ declare -A PVC_PATTERNS=(
     ["homepage"]="*homepage-config"
 )
 
-declare -A PVC_WORKLOADS=(
-    ["minecraft"]="deployment/minecraft-server -n default"
-    ["grafana"]="deployment/monitoring-grafana -n monitoring"
-    ["prometheus"]="statefulset/prometheus-monitoring-kube-prometheus-prometheus -n monitoring"
-    ["alertmanager"]="statefulset/alertmanager-monitoring-kube-prometheus-alertmanager -n monitoring"
-    ["homepage"]="deployment/homepage -n default"
+declare -A PVC_RESOURCE=(
+    ["minecraft"]="deployment/minecraft-server"
+    ["grafana"]="deployment/monitoring-grafana"
+    ["prometheus"]="statefulset/prometheus-monitoring-kube-prometheus-prometheus"
+    ["alertmanager"]="statefulset/alertmanager-monitoring-kube-prometheus-alertmanager"
+    ["homepage"]="deployment/homepage"
+)
+
+declare -A PVC_NAMESPACE=(
+    ["minecraft"]="default"
+    ["grafana"]="monitoring"
+    ["prometheus"]="monitoring"
+    ["alertmanager"]="monitoring"
+    ["homepage"]="default"
 )
 
 if [ $# -lt 2 ]; then
@@ -81,22 +89,23 @@ echo "Backup:  $BACKUP_FILE"
 echo "Size:    $(du -h "$BACKUP_FILE" | cut -f1)"
 echo ""
 echo "WARNING: This will OVERWRITE the current PVC data."
-echo "The associated workload (${PVC_WORKLOADS[$PVC_NAME]}) should be stopped first."
+echo "The associated workload (${PVC_RESOURCE[$PVC_NAME]}) should be stopped first."
 echo ""
 
 # Check if workload is running
-workload="${PVC_WORKLOADS[$PVC_NAME]}"
-pod_count=$($KUBECTL --kubeconfig="$KUBECONFIG" get "$workload" -o jsonpath='{.spec.replicas}' 2>/dev/null || echo "0")
+resource="${PVC_RESOURCE[$PVC_NAME]}"
+namespace="${PVC_NAMESPACE[$PVC_NAME]}"
+pod_count=$("$KUBECTL" --kubeconfig="$KUBECONFIG" get "$resource" -n "$namespace" -o jsonpath='{.spec.replicas}' 2>/dev/null || echo "0")
 if [ "$pod_count" != "0" ] && [ "$pod_count" != "" ]; then
-    echo "WARNING: Workload $workload has $pod_count replica(s) running."
+    echo "WARNING: Workload $resource has $pod_count replica(s) running."
     echo "It is strongly recommended to scale it to 0 before restoring."
     echo ""
     # Bug 7 fix: check for interactive terminal before using read
     if [ -t 0 ]; then
-        read -p "Scale down $workload to 0 replicas? [y/N] " scale_down
+        read -p "Scale down $resource to 0 replicas? [y/N] " scale_down
         if [[ "$scale_down" =~ ^[Yy]$ ]]; then
-            echo "Scaling down $workload..."
-            $KUBECTL --kubeconfig="$KUBECONFIG" scale "$workload" --replicas=0
+            echo "Scaling down $resource..."
+            "$KUBECTL" --kubeconfig="$KUBECONFIG" scale "$resource" -n "$namespace" --replicas=0
             echo "Waiting for pods to terminate..."
             sleep 10
         fi
@@ -120,11 +129,11 @@ else
 fi
 
 echo "Restoring from backup..."
-$TAR -I "$ZSTD" -xf "$BACKUP_FILE" -C "$pvc_parent"
+$TAR -I "$ZSTD" -xf "$BACKUP_FILE" -C "$pvc_dir"
 
 echo "Restore complete for '$PVC_NAME'."
 echo ""
 echo "Next steps:"
 echo "1. Verify the restored data looks correct"
-echo "2. Restart the workload: kubectl rollout restart $workload"
-echo "3. Monitor logs: kubectl logs $workload"
+echo "2. Restart the workload: kubectl rollout restart $resource -n $namespace"
+echo "3. Monitor logs: kubectl logs -n $namespace -l app=$(kubectl get $resource -n $namespace -o jsonpath='{.spec.selector.matchLabels.app}' 2>/dev/null || echo '?')"
