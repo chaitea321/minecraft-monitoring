@@ -1,0 +1,168 @@
+# Minecraft server (PaperMC) — codified from the live default/minecraft-server
+# Deployment (kubectl-managed, not previously in-repo).
+#
+# OOM fix (see JVM_XX_OPTS + USE_AIKAR_FLAGS on the 'minecraft' container):
+#   The JVM default MaxDirectMemorySize == -Xmx == 3G, so heap(3G)+direct(3G)
+#   could reach the 6Gi container limit -> OOMKilled. -XX:MaxDirectMemorySize=1G
+#   caps off-heap so total RSS stays ~4.5G; USE_AIKAR_FLAGS adds Paper's G1GC tuning.
+#
+# External prerequisites (exist in-cluster, not defined here):
+#   - PVC 'minecraft-data' (RWO)   - Secret 'minecraft-rcon-creds' (key: rcon-password)
+#   - ConfigMaps 'jmx-exporter-config', 'minecraft-exporter-config'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minecraft-server
+  namespace: default
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: minecraft
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/restartedAt: '2026-06-18T22:36:57Z'
+      labels:
+        app: minecraft
+    spec:
+      containers:
+      - env:
+        - name: EULA
+          value: 'TRUE'
+        - name: VERSION
+          value: 26.1.2
+        - name: TYPE
+          value: PAPER
+        - name: MEMORY
+          value: 3G
+        - name: USE_AIKAR_FLAGS
+          value: 'true'
+        - name: ONLINE_MODE
+          value: 'TRUE'
+        - name: ENFORCE_WHITELIST
+          value: 'TRUE'
+        - name: LEVEL
+          value: season3
+        - name: ENABLE_QUERY
+          value: 'true'
+        - name: JVM_XX_OPTS
+          value: -javaagent:/jmx/jmx_prometheus_javaagent.jar=5556:/jmx-config/config.yml -XX:MaxDirectMemorySize=1G
+        - name: RCON_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: rcon-password
+              name: minecraft-rcon-creds
+        - name: DATAPACKS
+          value: https://cdn.modrinth.com/data/8oi3bsk5/versions/f1lDwn23/Terralith_26.1_v2.6.2.zip
+        - name: WHITELIST
+          value: chaitea321, Arch_Xerneas, Trusker, Centurion99Ch, KoolAidBruhhhh, ladaniiphantom
+        image: itzg/minecraft-server:java25
+        imagePullPolicy: IfNotPresent
+        name: minecraft
+        ports:
+        - containerPort: 25565
+          name: mc-tcp
+          protocol: TCP
+        resources:
+          limits:
+            cpu: '2'
+            memory: 6Gi
+          requests:
+            cpu: '1'
+            memory: 1Gi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /data
+          name: data-volume
+        - mountPath: /jmx
+          name: jmx-exporter-jar
+          readOnly: true
+        - mountPath: /jmx-config
+          name: jmx-exporter-config
+          readOnly: true
+      - command:
+        - /minecraft-exporter
+        - -config
+        - /config/config.yaml
+        - -env
+        env:
+        - name: RCON_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: rcon-password
+              name: minecraft-rcon-creds
+        image: ghcr.io/heathcliff26/minecraft-exporter:latest
+        imagePullPolicy: IfNotPresent
+        name: minecraft-exporter
+        ports:
+        - containerPort: 8080
+          name: rcon-metrics
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+          requests:
+            cpu: 50m
+            memory: 64Mi
+        securityContext:
+          runAsGroup: 1000
+          runAsUser: 1000
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /data
+          name: data-volume
+          readOnly: true
+        - mountPath: /config/config.yaml
+          name: minecraft-exporter-config
+          readOnly: true
+          subPath: config.yaml
+      dnsPolicy: ClusterFirst
+      initContainers:
+      - command:
+        - sh
+        - -c
+        - wget -O /jmx/jmx_prometheus_javaagent.jar https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/1.0.1/jmx_prometheus_javaagent-1.0.1.jar
+        env:
+        - name: JVM_XX_OPTS
+          value: -javaagent:/jmx/jmx_prometheus_javaagent.jar=5556:/jmx-config/config.yml
+        image: busybox:latest
+        imagePullPolicy: Always
+        name: download-jmx-exporter
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+          requests:
+            cpu: 50m
+            memory: 64Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /jmx
+          name: jmx-exporter-jar
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: data-volume
+        persistentVolumeClaim:
+          claimName: minecraft-data
+      - emptyDir: {}
+        name: jmx-exporter-jar
+      - configMap:
+          defaultMode: 420
+          name: jmx-exporter-config
+        name: jmx-exporter-config
+      - configMap:
+          defaultMode: 420
+          name: minecraft-exporter-config
+        name: minecraft-exporter-config
