@@ -30,32 +30,31 @@ loki:
       volume_enabled: true
       ingestion_rate_mb: 10
       ingestion_burst_size_mb: 20
-
-    # Loki ruler: evaluates the LogQL log-alert rules (migrated out of the
-    # PrometheusRule, which Prometheus could not parse) and fires them to the
-    # kube-prometheus-stack Alertmanager. Rule groups are delivered by the
-    # chart's rules sidecar from ConfigMaps labelled loki_rule=1 (see below).
+    # The ruler keeps the original LogQL expressions and severity
+    # labels from manifests/alerting/log-alerts.yaml, so the existing
+    # AlertManager severity routing still applies. Without
+    # `alertmanager_url` the ruler would evaluate the rules but never
+    # push alerts anywhere.
     rulerConfig:
-      alertmanager_url: http://kube-prometheus-stack-alertmanager.monitoring:9093
+      alertmanager_url: http://kube-prometheus-stack-alertmanager.monitoring.svc:9093
+      # Alertmanager >= 0.27 (shipped by kube-prometheus-stack 85.x) removed
+      # the v1 alerts API — without v2 the ruler evaluates rules but every
+      # notification POST 404s. (Carried over from the superseded PR #5 fix.)
       enable_alertmanager_v2: true
       enable_api: true
       storage:
         type: local
         local:
-          directory: /rules
-      rule_path: /tmp/loki-ruler-scratch
+          directory: /etc/loki/rules
+      wal:
+        dir: /var/loki/ruler-wal
+      # Keep evaluation intervals aligned with the `for:` durations
+      # in the rules (the smallest is 5m) so an alert can transition
+      # to Pending promptly after the threshold is crossed.
+      evaluation_interval: 1m
+      poll_interval: 1m
 
   deploymentMode: SingleBinary
-
-  # Rules sidecar (top-level chart value, NOT under loki.loki): watches the
-  # monitoring namespace for ConfigMaps labelled loki_rule=1 and writes them
-  # into the ruler's storage directory (/rules) for the ruler to load.
-  sidecar:
-    rules:
-      enabled: true
-      searchNamespace: monitoring
-      folder: /rules
-      label: loki_rule
 
   # SingleBinary configuration
   singleBinary:
@@ -123,3 +122,40 @@ loki:
     serviceMonitor:
       enabled: true
       interval: 15s
+
+  # LogQL alert evaluation.
+  #
+  # The four Minecraft log alerts in manifests/alerting/log-alerts.yaml
+  # are LogQL, so they must be evaluated by Loki's embedded ruler —
+  # not by Prometheus (promtool rejects |= / count_over_time over a
+  # log stream with a parse error, so a PrometheusRule carrying them
+  # never loads). We turn on the kiwigrid rules sidecar, point it at
+  # /etc/loki/rules inside the SingleBinary pod, and have the ruler
+  # read from the same path (see loki.loki.rulerConfig above). The
+  # sidecar watches ConfigMaps labelled `loki_rule` in the
+  # `monitoring` namespace, so the ConfigMap above is picked up
+  # automatically and updates roll out without a Helm re-render.
+  #
+  # For severity-based routing to keep working, the ruler pushes its
+  # alerts to the kube-prometheus-stack AlertManager. The
+  # kube-prometheus-stack is installed by Argo CD with release name
+  # "kube-prometheus-stack" in the `monitoring` namespace, so the
+  # service is
+  # `kube-prometheus-stack-alertmanager.monitoring.svc:9093`.
+  sidecar:
+    rules:
+      enabled: true
+      # Mount under the same path the loki ruler reads from, so the
+      # sidecar-fed files and the ruler's local rule storage agree.
+      folder: /etc/loki/rules
+      # Default label is `loki_rule`; ConfigMaps in manifests/alerting
+      # carry that label so the sidecar picks them up.
+      label: loki_rule
+      # Only watch the namespace loki is deployed in; no need to
+      # chase ConfigMaps elsewhere on the cluster.
+      searchNamespace:
+        - monitoring
+      # Only watch ConfigMaps — the rules live in ConfigMaps, not
+      # Secrets.
+      resource: configmap
+      watchMethod: WATCH

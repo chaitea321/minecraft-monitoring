@@ -1,0 +1,83 @@
+---
+# LogQL alert rules for the Minecraft server.
+#
+# These four alerts are evaluated by Loki's embedded ruler, not Prometheus:
+# their expressions are LogQL (|=, count_over_time over a log stream) and
+# promtool rejects them with parse errors when they live in a
+# monitoring.coreos.com/v1 PrometheusRule (the rule group never loads).
+#
+# The kiwigrid rules sidecar bundled with the loki helm chart
+# (ruler.sidecar: true in loki-values.yaml) watches ConfigMaps labelled
+# `loki_rule` in the `monitoring` namespace, mounts them into the Loki
+# pod at /etc/loki/rules, and the SingleBinary loki process evaluates
+# them against incoming log streams. For alerts to keep the same
+# severity-based routing as the metrics-based rules, the Loki ruler is
+# configured with `ruler.alertmanager_url` pointing at the
+# kube-prometheus-stack AlertManager (see loki-values.yaml).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: minecraft-log-alerts
+  namespace: monitoring
+  labels:
+    loki_rule: ""
+data:
+  minecraft-logs.rules.yaml: |
+    groups:
+      - name: minecraft.log.rules
+        rules:
+          # Alert on high error rate in logs
+          - alert: MinecraftHighErrorRate
+            expr: |
+              sum by (instance) (
+                count_over_time({app="minecraft"} |= "ERROR" [5m])
+              ) / 300 > 10
+            for: 5m
+            labels:
+              severity: warning
+              namespace: monitoring
+            annotations:
+              summary: "High error rate in Minecraft logs"
+              description: "Minecraft server has {{ $value | humanize }} errors per minute"
+
+          # Alert on frequent GC pauses
+          - alert: MinecraftGCStress
+            expr: |
+              sum by (instance) (
+                count_over_time({app="minecraft"} |= "GC" [5m])
+              ) / 300 > 5
+            for: 5m
+            labels:
+              severity: warning
+              namespace: monitoring
+            annotations:
+              summary: "Frequent garbage collection detected"
+              description: "Minecraft server has {{ $value }} GC events per minute"
+
+          # Alert on chunk loading issues
+          - alert: MinecraftChunkStress
+            expr: |
+              sum by (instance) (
+                count_over_time({app="minecraft"} |= "Chunk" |= "load" [5m])
+              ) / 300 > 20
+            for: 5m
+            labels:
+              severity: info
+              namespace: monitoring
+            annotations:
+              summary: "High chunk loading activity"
+              description: "Minecraft server loading {{ $value }} chunks per minute"
+
+          # Alert on player disconnects
+          - alert: MinecraftPlayerDisconnects
+            expr: |
+              sum by (instance) (
+                count_over_time({app="minecraft"} |= "left the game" [5m])
+              ) / 300 > 3
+            for: 5m
+            labels:
+              severity: info
+              namespace: monitoring
+            annotations:
+              summary: "High player disconnect rate"
+              description: "Minecraft server has {{ $value }} player disconnects per minute"

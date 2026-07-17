@@ -44,9 +44,12 @@ $KUBECTL get configmap grafana-provisioning -n monitoring &>/dev/null && pass "G
 echo ""
 echo "Checking alert rules..."
 $KUBECTL get prometheusrules minecraft-alerts -n monitoring &>/dev/null && pass "Minecraft alerts exist" || fail "Minecraft alerts missing"
-# Log alerts are LogQL and live in the Loki ruler ConfigMap (not a PrometheusRule —
-# Prometheus cannot parse LogQL). See manifests/alerting/loki-ruler-alerts.yaml.
-$KUBECTL get configmap loki-ruler-alerts -n monitoring &>/dev/null && pass "Loki log-alert rules exist" || info "Loki log-alert ConfigMap missing"
+# LogQL alerts (MinecraftHighErrorRate / MinecraftGCStress / MinecraftChunkStress /
+# MinecraftPlayerDisconnects) are evaluated by Loki's ruler, not Prometheus.
+# They live in a ConfigMap labelled `loki_rule` that the kiwigrid rules
+# sidecar inside the SingleBinary pod mounts as a rule file.
+$KUBECTL get configmap minecraft-log-alerts -n monitoring &>/dev/null && pass "Log alerts ConfigMap exists" || fail "Log alerts ConfigMap missing"
+$KUBECTL get configmap minecraft-log-alerts -n monitoring -o jsonpath='{.metadata.labels.loki_rule}' 2>/dev/null | grep -q . && pass "Log alerts ConfigMap carries loki_rule label" || fail "Log alerts ConfigMap missing loki_rule label"
 
 # Check pods
 echo ""
