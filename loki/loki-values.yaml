@@ -31,7 +31,31 @@ loki:
       ingestion_rate_mb: 10
       ingestion_burst_size_mb: 20
 
+    # Loki ruler: evaluates the LogQL log-alert rules (migrated out of the
+    # PrometheusRule, which Prometheus could not parse) and fires them to the
+    # kube-prometheus-stack Alertmanager. Rule groups are delivered by the
+    # chart's rules sidecar from ConfigMaps labelled loki_rule=1 (see below).
+    rulerConfig:
+      alertmanager_url: http://kube-prometheus-stack-alertmanager.monitoring:9093
+      enable_alertmanager_v2: true
+      enable_api: true
+      storage:
+        type: local
+        local:
+          directory: /rules
+      rule_path: /tmp/loki-ruler-scratch
+
   deploymentMode: SingleBinary
+
+  # Rules sidecar (top-level chart value, NOT under loki.loki): watches the
+  # monitoring namespace for ConfigMaps labelled loki_rule=1 and writes them
+  # into the ruler's storage directory (/rules) for the ruler to load.
+  sidecar:
+    rules:
+      enabled: true
+      searchNamespace: monitoring
+      folder: /rules
+      label: loki_rule
 
   # SingleBinary configuration
   singleBinary:

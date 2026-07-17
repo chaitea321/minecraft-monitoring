@@ -44,7 +44,9 @@ $KUBECTL get configmap grafana-provisioning -n monitoring &>/dev/null && pass "G
 echo ""
 echo "Checking alert rules..."
 $KUBECTL get prometheusrules minecraft-alerts -n monitoring &>/dev/null && pass "Minecraft alerts exist" || fail "Minecraft alerts missing"
-$KUBECTL get prometheusrules minecraft-log-alerts -n monitoring &>/dev/null && pass "Log alerts exist" || info "Log alerts may be in separate file"
+# Log alerts are LogQL and live in the Loki ruler ConfigMap (not a PrometheusRule —
+# Prometheus cannot parse LogQL). See manifests/alerting/loki-ruler-alerts.yaml.
+$KUBECTL get configmap loki-ruler-alerts -n monitoring &>/dev/null && pass "Loki log-alert rules exist" || info "Loki log-alert ConfigMap missing"
 
 # Check pods
 echo ""
