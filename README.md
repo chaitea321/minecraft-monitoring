@@ -30,7 +30,7 @@ A self-hosted platform that gives a Minecraft server the same observability you'
 
 ## Highlights
 
-- **Full observability pipeline** — metrics, logs, dashboards, and alerting wired end-to-end for a single game server, on a 3-node home cluster.
+- **Full observability pipeline** — metrics, logs, dashboards, and alerting wired end-to-end for a single game server, on a single-node k3s home cluster.
 - **ChatOps control plane** — 12 Discord slash commands manage the server over RCON without SSH or a console.
 - **AI-assisted incident response** — alerts arrive pre-enriched with live PromQL/LogQL diagnostics and a phi3 (Ollama) root-cause summary, non-blocking by design.
 - **GitOps all the way down** — Argo CD App-of-Apps reconciles the entire stack from this repo; zero manual `kubectl apply`.
@@ -41,7 +41,7 @@ A self-hosted platform that gives a Minecraft server the same observability you'
 ```mermaid
 %%{init: {'theme':'base','themeVariables':{'fontFamily':'ui-monospace, SFMono-Regular, monospace','primaryColor':'#20262B','primaryTextColor':'#EDE6D6','primaryBorderColor':'#3A4249','lineColor':'#5E6A72','clusterBkg':'#181B1E','clusterBorder':'#2E353B','tertiaryColor':'#181B1E'}}}%%
 flowchart TB
-    MC["PaperMC 1.21.4<br/>Java 21 · 3 GB heap"]
+    MC["PaperMC 26.1.2<br/>Java 25 · 3 GB heap"]
 
     subgraph OBS["Observability"]
         PROM["Prometheus<br/>+ AlertManager"]
@@ -134,7 +134,7 @@ AI is **best-effort** — if Ollama is slow (CPU-bound, ~38 s/query) or down, al
 | Layer | Tool | Role |
 |-------|------|------|
 | Runtime | **k3s** (v1.34) | Lightweight Kubernetes |
-| Server | **PaperMC** 1.21.4 | Minecraft server (Java 21) |
+| Server | **PaperMC** 26.1.2 | Minecraft server (Java 25) |
 | Metrics | **Prometheus** / kube-prometheus-stack | Collection + alerting |
 | Dashboards | **Grafana** | 20-panel Minecraft dashboard |
 | Logs | **Loki + Promtail** | Aggregation (7-day retention) |
@@ -225,20 +225,24 @@ monitoring/
 │   ├── prometheus_client.py#   async Prometheus query client
 │   └── rcon_client.py      #   RCON protocol client
 ├── incident-responder/     # Alert → diagnostics → AI → Discord webhook server
+├── homelab-status/         # Stdlib-only unified status page (no deps)
 ├── helm/                   # kube-prometheus-stack Helm values
-├── loki/                   # Loki + Promtail Helm values
+├── loki/                   # Loki + Promtail Helm values (incl. ruler for log alerts)
 ├── manifests/
-│   ├── alerting/           #   PrometheusRules + AlertmanagerConfig
+│   ├── alerting/           #   PrometheusRules + AlertmanagerConfig + Loki ruler rules
 │   ├── automation/         #   memory-restart CronJob + RBAC
 │   ├── dashboards/         #   Grafana dashboard ConfigMaps
 │   ├── datasources/        #   Grafana datasource ConfigMaps
+│   ├── discord-bot/        #   Discord bot Deployment + quota
 │   ├── eso/                #   ExternalSecrets + ClusterSecretStore
 │   ├── exporters/          #   JMX exporter + ServiceMonitors
+│   ├── health-checker/     #   Periodic service health CronJob
 │   ├── homepage/           #   Homepage dashboard
 │   ├── ingress/            #   Traefik ingress
 │   ├── middleware/         #   Traefik middlewares (strip-prefix, rate-limit)
-│   ├── ollama/             #   Ollama StatefulSet
-│   └── status-page/        #   Uptime Kuma
+│   ├── minecraft/          #   PaperMC Deployment + Service (codified)
+│   └── ollama/             #   Ollama StatefulSet
+├── docs/                   # Assets for this README
 ├── infra/                  # Bicep IaC for Azure AKS (portfolio reference)
 └── scripts/                # PVC backup / restore / verify (zstd)
 ```
@@ -255,10 +259,16 @@ monitoring/
 Everything is reconciled by Argo CD via App-of-Apps. Install the root app once; the rest follows from `main`.
 
 ```bash
-git clone git@github.com:evince55/minecraft-monitoring.git
+git clone https://github.com/evince55/minecraft-monitoring.git
 cd minecraft-monitoring
 kubectl apply -f argocd/root-app.yaml   # bootstraps every other Application
 ```
+
+Argo CD pulls this repo over **public HTTPS**, so no SSH deploy key or repository
+credential is required. (Renaming the GitHub account previously invalidated the
+SSH deploy key, which silently wedged every Application in `ComparisonError` /
+`Unknown` sync state while the pods carried on running — HTTPS removes that
+whole failure mode.)
 
 **Prerequisites:** a k3s cluster (v1.21+), Helm v3, `kubectl`, and Traefik (bundled with k3s).
 
