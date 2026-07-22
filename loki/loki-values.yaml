@@ -143,6 +143,23 @@ loki:
   # service is
   # `kube-prometheus-stack-alertmanager.monitoring.svc:9093`.
   sidecar:
+    # REQUIRED: monitoring-quota is a ResourceQuota that sets limits.cpu/memory
+    # and requests.cpu/memory, so admission rejects ANY container that omits
+    # them. The chart ships `sidecar.resources: {}`, so without this the
+    # loki-sc-rules container has no resources and the StatefulSet cannot
+    # create loki-0 at all:
+    #   pods "loki-0" is forbidden: failed quota: monitoring-quota:
+    #   must specify limits.cpu for: loki-sc-rules; ...
+    # There is no LimitRange in `monitoring` to supply defaults (the one in
+    # manifests/limitranges.yaml only covers kube-system), so the values must
+    # be explicit here.
+    resources:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 10m
+        memory: 64Mi
     rules:
       enabled: true
       # Mount under the same path the loki ruler reads from, so the
