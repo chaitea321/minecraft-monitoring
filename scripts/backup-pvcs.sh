@@ -160,6 +160,19 @@ spec:
   - name: backup
     image: busybox:1.37
     command: ["sh", "-c", "sleep 300"]
+    # REQUIRED: the monitoring namespace has a ResourceQuota covering
+    # limits.cpu/memory and requests.cpu/memory, and there is no LimitRange
+    # there to supply defaults (manifests/limitranges.yaml only covers
+    # kube-system). Without this block admission rejects the pod outright:
+    #   pods "backup-..." is forbidden: failed quota: monitoring-quota:
+    #   must specify limits.cpu for: backup; ...
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
     volumeMounts:
     - name: data
       mountPath: ${mount_path}
@@ -228,11 +241,15 @@ EOF
 backup_pod "minecraft" "default" "deploy/minecraft-server" "minecraft" "/data" ""
 
 # Grafana - /var/lib/grafana contains SQLite DB, dashboards, plugins
-backup_pod "grafana" "monitoring" "deploy/monitoring-grafana" "grafana" "/var/lib/grafana" ""
+# NOTE: the Helm release is "kube-prometheus-stack", not "monitoring-*". The
+# old deploy/monitoring-grafana name has not existed for months, so this
+# backup failed silently every night since the release was renamed.
+backup_pod "grafana" "monitoring" "deploy/kube-prometheus-stack-grafana" "grafana" "/var/lib/grafana" ""
 
 # Prometheus - /prometheus contains TSDB data; exclude WAL (rebuildable)
 # Uses temporary pod because Prometheus container is distroless (no tar binary)
-PROMETHEUS_PVC=$($KUBECTL --kubeconfig="$KUBECONFIG" get pvc -n monitoring -l app.kubernetes.io/instance=monitoring-kube-prometheus-prometheus -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
+# NOTE: instance label is kube-prometheus-stack-prometheus (see rename above).
+PROMETHEUS_PVC=$($KUBECTL --kubeconfig="$KUBECONFIG" get pvc -n monitoring -l app.kubernetes.io/instance=kube-prometheus-stack-prometheus -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
 if [ -n "$PROMETHEUS_PVC" ]; then
     backup_pvc_pod "prometheus" "monitoring" "$PROMETHEUS_PVC" "/prometheus" "wal"
 else
@@ -241,7 +258,9 @@ else
 fi
 
 # AlertManager - /alertmanager contains silences, notification log
-backup_pod "alertmanager" "monitoring" "statefulset/alertmanager-monitoring-kube-prometheus-alertmanager" "alertmanager" "/alertmanager" ""
+# NOTE: same rename -- the StatefulSet is
+# alertmanager-kube-prometheus-stack-alertmanager.
+backup_pod "alertmanager" "monitoring" "statefulset/alertmanager-kube-prometheus-stack-alertmanager" "alertmanager" "/alertmanager" ""
 
 # Homepage - /app/config contains YAML configs
 backup_pod "homepage" "default" "deploy/homepage" "homepage" "/app/config" ""
